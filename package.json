@@ -1,0 +1,15 @@
+{
+  "name": "leanx-showroom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Leanx Digital — interactive exhibition portal for the booth touchscreen",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node tools/serve.mjs 8765",
+    "capture": "node tools/capture.mjs",
+    "check-embed": "node tools/check-embed.mjs",
+    "preview:landscape": "node tools/preview.mjs 1920x1080",
+    "preview:portrait": "node tools/preview.mjs 1080x1920"
+  }
+}

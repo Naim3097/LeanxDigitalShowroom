@@ -1,0 +1,14 @@
+# QA renders — regenerate with: node tools/preview.mjs 1920x1080
+preview/
+
+# Vercel
+.vercel/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

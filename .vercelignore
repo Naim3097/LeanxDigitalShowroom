@@ -1,0 +1,6 @@
+# Local-only tooling and artefacts — never deployed.
+tools/
+preview/
+*.bat
+.claude/
+node_modules/
