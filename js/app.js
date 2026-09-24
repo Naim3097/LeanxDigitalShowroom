@@ -6,7 +6,6 @@
   'use strict';
 
   const CONFIG = {
-    idleHome: 75000,       // ms without touch (stage / map / search) before returning to the showroom
     idleViewer: 150000,    // ms without touch inside a live site before the "still exploring?" prompt
     idlePrompt: 20000,     // ms the prompt waits before going home by itself
     attractAfter: 20000,   // ms idle on the home screen before attract mode starts
@@ -216,9 +215,10 @@
   function scheduleIdle() {
     clearTimeout(idleTimer); clearTimeout(attractTimer);
     if (state.screen === 'home' && !searchOpen) { attractTimer = setTimeout(startAttract, CONFIG.attractAfter); return; }
-    idleTimer = setTimeout(onIdle, state.screen === 'viewer' ? CONFIG.idleViewer : CONFIG.idleHome);
+    // Only a live site times out: stage, map, follow and search stay where the visitor left them.
+    if (state.screen === 'viewer') idleTimer = setTimeout(onIdle, CONFIG.idleViewer);
   }
-  function onIdle() { if (state.screen === 'viewer') showPrompt(); else resetToHome(); }
+  function onIdle() { if (state.screen === 'viewer') showPrompt(); }
   function resetToHome() { closeSearch(); goHome(null, true); }
   function startIdleWatch() {
     ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'].forEach(ev => window.addEventListener(ev, activity, { passive: true, capture: true }));

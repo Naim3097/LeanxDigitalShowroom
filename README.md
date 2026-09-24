@@ -195,7 +195,7 @@ size and which of the four compositions it is using, for example `1920 × 540 ·
 | **Stage** | Tap an exhibit: the X wipes to the project introduction with previews, what we built, highlights and a QR code. Swipe or use Previous / Next to move between projects. |
 | **Viewer** | "Experience it" opens the live site inside the portal. Back and the X (Home) are always visible in the top bar. Sites that refuse embedding are shown as full-screen captured screens with a QR code. |
 | **All projects** | Every project grouped by capability. |
-| **Follow us** | Our TikTok, Instagram and Facebook as three large QR codes. Also opens directly at `/#follow`. A visitor opens their phone camera, points it at one, and lands on the channel. Reachable from the top bar on every screen; returns home on its own after the idle timeout. |
+| **Follow us** | Our TikTok, Instagram and Facebook as three large QR codes. Also opens directly at `/#follow`. A visitor opens their phone camera, points it at one, and lands on the channel. Reachable from the top bar on every screen. |
 | **Search** | Instant search over names, industries, capabilities, descriptions and tags, with a large on-screen keyboard. |
 
 The gold **X** in the top-left is always Home. Every enter and return passes through the X.
@@ -204,7 +204,6 @@ The gold **X** in the top-left is always Home. Every enter and return passes thr
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `idleHome` | 75 s | No touch on stage / map / search → back to the showroom, filters reset |
 | `idleViewer` | 150 s | No touch while a live site is open → "Still exploring?" prompt |
 | `idlePrompt` | 20 s | Prompt countdown before returning home by itself |
 | `attractAfter` | 20 s | Idle on home → attract mode: exhibits advance on their own, "Touch to explore" |
