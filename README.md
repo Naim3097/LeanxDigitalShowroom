@@ -195,6 +195,7 @@ size and which of the four compositions it is using, for example `1920 × 540 ·
 | **Stage** | Tap an exhibit: the X wipes to the project introduction with previews, what we built, highlights and a QR code. Swipe or use Previous / Next to move between projects. |
 | **Viewer** | "Experience it" opens the live site inside the portal. Back and the X (Home) are always visible in the top bar. Sites that refuse embedding are shown as full-screen captured screens with a QR code. |
 | **All projects** | Every project grouped by capability. |
+| **Follow us** | Our TikTok, Instagram and Facebook as three large QR codes. Also opens directly at `/#follow`. A visitor opens their phone camera, points it at one, and lands on the channel. Reachable from the top bar on every screen; returns home on its own after the idle timeout. |
 | **Search** | Instant search over names, industries, capabilities, descriptions and tags, with a large on-screen keyboard. |
 
 The gold **X** in the top-left is always Home. Every enter and return passes through the X.
@@ -216,10 +217,10 @@ uses a longer timeout plus a prompt instead of a silent reset.
 ### Staff shortcuts (keyboard)
 
 `F` full screen · `H` or `Home` home · `Esc` back / close · `/` or `S` search · `M` all projects ·
-`I` screen size and layout · arrow keys move the showroom · `Enter` opens the focused project.
+`L` follow us · `I` screen size and layout · arrow keys move the showroom · `Enter` opens the focused project.
 
 The browser console also exposes `showroom` (for example `showroom.open('sxan')`,
-`showroom.home(true)`, `showroom.lens('interactive')`).
+`showroom.home(true)`, `showroom.lens('interactive')`, `showroom.follow()`).
 
 ---
 
@@ -251,6 +252,29 @@ belong to several.
 
 ---
 
+## Changing the social channels
+
+The **Follow us** screen is generated from `LEANX_SOCIALS` at the bottom of `js/projects.js`. Each
+entry points at a QR image in `assets/social/`:
+
+| File | Channel |
+| --- | --- |
+| `assets/social/leanx_tiktok_qr.png` | TikTok |
+| `assets/social/leanx_instagram_qr.png` | Instagram |
+| `assets/social/leanx_facebook_qr.png` | Facebook |
+
+- **A link changed:** generate a new QR code for it (any square PNG with a white quiet zone works)
+  and replace the file, keeping the name. Nothing else needs editing.
+- **Show the handle under the code:** fill in `handle` for that entry, for example `@leanxdigital`.
+- **Add or remove a channel:** add or remove an entry. The cards resize to fit; icons exist for
+  `tiktok`, `instagram` and `facebook`, and an entry with another `id` shows without an icon.
+
+The three images are cached by the service worker, so the screen works when the venue wifi is
+down. After replacing an image, bump `VERSION` in `sw.js` so kiosks that have already loaded the
+portal fetch the new one.
+
+---
+
 ## Files
 
 ```
@@ -262,6 +286,7 @@ js/qrcode.js                  QR generator (MIT, vendored)
 sw.js                         offline safety net for the booth
 manifest.webmanifest          installable full-screen app
 assets/brand/                 X mark, wordmark, app icons
+assets/social/                QR codes for the Follow us screen
 assets/fonts/                 Outfit (variable), self-hosted
 assets/shots/                 preview frames per project
 vercel.json                   static deployment: headers and caching
@@ -284,6 +309,7 @@ node tools/preview.mjs 2560x1080
 node tools/preview.mjs 1080x1920
 ```
 
-writes one JPG per screen (home, stage, live viewer, screens viewer, map, search, attract) into
-`preview/`. Pass the booth's real resolution to check it before an event. Add `wipe` as a fifth
+writes one JPG per screen (home, stage, live viewer, screens viewer, map, follow, search, attract)
+into `preview/`. Add `quick` as a fifth argument (with `preview http://localhost:8765/` as the third
+and fourth) for a layout-only pass over home, follow and map that skips the live sites. Pass the booth's real resolution to check it before an event. Add `wipe` as a fifth
 argument to render frozen frames of the X transition.

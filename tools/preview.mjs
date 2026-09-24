@@ -2,12 +2,14 @@
 // Renders the portal at an exact screen size and captures every screen.
 //   node tools/preview.mjs 1920x1080 [outDir] [http://localhost:8765/]
 //   node tools/preview.mjs 1080x1920
+//   node tools/preview.mjs 1920x540 preview http://localhost:8765/ quick   (layout-only pass, no live sites)
 // Requires the local server to be running (node tools/serve.mjs).
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -17,11 +19,13 @@ const URL = process.argv[4] || 'http://localhost:8765/';
 const PORT = 9344;
 // A fresh profile per run: a previous headless Chrome that has not exited yet
 // keeps a lock on its own folder, and that must not block a QA render.
-const PROFILE = path.join(process.env.TEMP || 'C:/Temp', `leanx-preview-${process.pid}-${Date.now()}`);
+const PROFILE = path.join(os.tmpdir(), `leanx-preview-${process.pid}-${Date.now()}`);
 const CANDIDATES = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/usr/bin/google-chrome', '/usr/bin/chromium',
 ];
 const CHROME = CANDIDATES.find(p => fs.existsSync(p));
 const tag = `${W}x${H}`;
@@ -44,10 +48,18 @@ const SCREEN_STEPS = [
   { name: 'viewer-frames', js: "showroom.enter('nexova')", wait: 2000 },
   { name: 'viewer-gate', js: "showroom.home(); setTimeout(() => showroom.open('discova'), 700); setTimeout(() => showroom.enter('discova'), 1900)", wait: 11000 },
   { name: 'map', js: 'showroom.map()', wait: 1400 },
+  { name: 'follow', js: 'showroom.follow()', wait: 1400 },
   { name: 'search', js: "showroom.search('3d')", wait: 900 },
   { name: 'attract', js: "showroom.state && (document.querySelector('#search').hidden = true); showroom.home(true); setTimeout(() => showroom.attract(), 1000)", wait: 2400 },
 ];
-const STEPS = MODE === 'wipe' ? WIPE_STEPS : SCREEN_STEPS;
+// A fast pass over the screens that need no network: for checking layout edits.
+const QUICK_STEPS = [
+  { name: 'home', wait: 3200 },
+  { name: 'follow', js: 'showroom.follow()', wait: 1400 },
+  { name: 'map', js: 'showroom.map()', wait: 1400 },
+  { name: 'home-back', js: 'showroom.home()', wait: 1400 },
+];
+const STEPS = MODE === 'wipe' ? WIPE_STEPS : MODE === 'quick' ? QUICK_STEPS : SCREEN_STEPS;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const getJson = url => new Promise((res, rej) => http.get(url, r => { let d = ''; r.on('data', c => d += c); r.on('end', () => { try { res(JSON.parse(d)); } catch (e) { rej(e); } }); }).on('error', rej));

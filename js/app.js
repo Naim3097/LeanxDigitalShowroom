@@ -17,6 +17,7 @@
   };
 
   const CAPS = window.LEANX_CAPABILITIES || [];
+  const SOCIALS = window.LEANX_SOCIALS || [];
   const PROJECTS = [...(window.LEANX_PROJECTS || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
   const capById = Object.fromEntries(CAPS.map(c => [c.id, c]));
   const byId = id => PROJECTS.find(p => p.id === id);
@@ -184,6 +185,9 @@
       body.classList.remove('is-booting'); bootEl.classList.add('is-done');
       setTimeout(() => bootEl.remove(), 300);
       state.booted = true; litHome(); startIdleWatch();
+      // Deep links for staff and QA: /#follow or /#map opens that screen once the X has landed.
+      const want = (location.hash || '').slice(1);
+      if (want === 'follow') openFollow(null); else if (want === 'map') openMap(null);
     };
     const fly = () => {
       if (flying) return; flying = true;
@@ -644,6 +648,29 @@
   }
 
   /* ------------------------------------------------------------------
+     Follow: our social channels, one QR code each (js/projects.js)
+  ------------------------------------------------------------------ */
+  const SOCIAL_ICONS = {
+    tiktok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>',
+    instagram: '<svg class="ico-stroke" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r=".9" fill="currentColor" stroke="none"/></svg>',
+    facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+  };
+  function buildFollow() {
+    const grid = $('#followGrid'); if (!grid) return;
+    grid.innerHTML = SOCIALS.map(s => `
+      <article class="follow-card" style="--h:${Number(s.hue) || 0}">
+        <div class="follow-card-head">
+          <span class="follow-icon">${SOCIAL_ICONS[s.id] || ''}</span>
+          <div><b>${esc(s.label)}</b><span>Scan to follow</span></div>
+        </div>
+        <div class="follow-qr"><img src="${esc(s.qr)}" alt="QR code: Leanx Digital on ${esc(s.label)}" draggable="false"></div>
+        ${s.handle ? `<p class="follow-handle">${esc(s.handle)}</p>` : ''}
+      </article>`).join('');
+    $$('.follow-qr img', grid).forEach(im => im.addEventListener('error', () => { im.closest('.follow-card').classList.add('is-missing'); }));
+    if (!SOCIALS.length) $('#followBtn').hidden = true;
+  }
+
+  /* ------------------------------------------------------------------
      Search: instant, with a large on-screen keyboard
   ------------------------------------------------------------------ */
   let searchOpen = false, query = '';
@@ -765,11 +792,15 @@
   }
   function goBack(origin) {
     if (state.screen === 'viewer') return guarded(async () => { hidePrompt(); await xWipe(origin, () => showScreen('stage')); });
-    if (state.screen === 'stage' || state.screen === 'map') return goHome(origin);
+    if (state.screen === 'stage' || state.screen === 'map' || state.screen === 'follow') return goHome(origin);
   }
   function openMap(origin) {
     if (state.screen === 'map') return;
     return guarded(async () => { closeSearch(); await xWipe(origin, () => showScreen('map')); $('#mapGroups').scrollTop = 0; });
+  }
+  function openFollow(origin) {
+    if (state.screen === 'follow') return;
+    return guarded(async () => { closeSearch(); hidePrompt(); await xWipe(origin, () => showScreen('follow')); });
   }
   /* ------------------------------------------------------------------
      Fullscreen. Three things can happen and the visitor must be able to
@@ -832,6 +863,7 @@
     $('#homeBtn').addEventListener('click', e => goHome(centreOf(e.currentTarget)));
     $('#backBtn').addEventListener('click', e => goBack(centreOf(e.currentTarget)));
     $('#mapBtn').addEventListener('click', e => openMap(centreOf(e.currentTarget)));
+    $('#followBtn').addEventListener('click', e => openFollow(centreOf(e.currentTarget)));
     $('#searchBtn').addEventListener('click', openSearch);
     $('#fullscreenBtn').addEventListener('click', toggleFullscreen);
     $('#prevBtn').addEventListener('click', () => rail.setIndex(state.index - 1));
@@ -853,6 +885,7 @@
       else if (e.key === 'h' || e.key === 'H' || e.key === 'Home') goHome(centreOf($('#homeBtn')));
       else if (e.key === '/' || e.key === 's' || e.key === 'S') { e.preventDefault(); openSearch(); }
       else if (e.key === 'm' || e.key === 'M') openMap(centreOf($('#mapBtn')));
+      else if (e.key === 'l' || e.key === 'L') openFollow(centreOf($('#followBtn')));
       else if (e.key === 'i' || e.key === 'I') toast(`${innerWidth} × ${innerHeight} · ${layoutLabel()} layout`, 6000);
       else if (state.screen === 'home' && (e.key === 'ArrowRight' || e.key === 'ArrowDown')) rail.setIndex(state.index + 1);
       else if (state.screen === 'home' && (e.key === 'ArrowLeft' || e.key === 'ArrowUp')) rail.setIndex(state.index - 1);
@@ -877,7 +910,7 @@
 
   function init() {
     applyOrient();
-    buildLenses(); buildMap(); buildSearch();
+    buildLenses(); buildMap(); buildFollow(); buildSearch();
     rail.build(state.list);
     $('#railLensLabel').textContent = 'All projects';
     bind();
@@ -894,6 +927,7 @@
     home: reset => goHome(null, !!reset),
     back: () => goBack(null),
     map: () => openMap(null),
+    follow: () => openFollow(null),
     search: q => { openSearch(); if (q) { query = q; runSearch(); } },
     lens: setLens,
     goto: i => rail.setIndex(i),

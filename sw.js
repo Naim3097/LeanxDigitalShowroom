@@ -12,12 +12,13 @@
      anything cross-origin passed straight through, never touched
    ===================================================================== */
 
-const VERSION = 'leanx-showroom-v1';
+const VERSION = 'leanx-showroom-v2';
 const CORE = [
   './', './index.html', './css/portal.css',
   './js/app.js', './js/projects.js', './js/qrcode.js',
   './assets/brand/x-3d.png', './assets/brand/wordmark.png',
   './assets/fonts/outfit-latin.woff2', './assets/fonts/outfit-latin-ext.woff2',
+  './assets/social/leanx_tiktok_qr.png', './assets/social/leanx_instagram_qr.png', './assets/social/leanx_facebook_qr.png',
 ];
 
 self.addEventListener('install', e => {

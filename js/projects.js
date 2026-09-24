@@ -233,3 +233,17 @@ window.LEANX_PROJECTS = [
     gate: { note: 'DISCOVA is our own tool, so it opens behind a team sign-in. Ask any of us to unlock it and we will audit your website right here.' },
   },
 ];
+
+/* =====================================================================
+   SOCIAL CHANNELS — the "Follow us" screen
+   One QR code per channel. Each PNG was generated from the channel's
+   link; to change a link, replace its PNG in assets/social/ (any square
+   PNG with a white quiet zone works). `handle` is optional: when filled
+   in it is printed under the code so a visitor can also type it.
+   `hue` tints the card in that platform's colour.
+   ===================================================================== */
+window.LEANX_SOCIALS = [
+  { id: 'tiktok',    label: 'TikTok',    handle: '', qr: 'assets/social/leanx_tiktok_qr.png',    hue: 350 },
+  { id: 'instagram', label: 'Instagram', handle: '', qr: 'assets/social/leanx_instagram_qr.png', hue: 320 },
+  { id: 'facebook',  label: 'Facebook',  handle: '', qr: 'assets/social/leanx_facebook_qr.png',  hue: 214 },
+];
