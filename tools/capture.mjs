@@ -19,7 +19,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'assets', 'shots');
 const ONLY = process.argv[2] ? process.argv[2].split(',') : null;
 const PORT = 9333;
-const PROFILE = path.join(process.env.TEMP || 'C:/Temp', 'leanx-capture-profile');
+// A fresh profile per run: a previous headless Chrome that has not exited yet
+// keeps a lock on its own folder.
+const PROFILE = path.join(process.env.TEMP || 'C:/Temp', `leanx-capture-${process.pid}-${Date.now()}`);
 const CANDIDATES = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
@@ -84,7 +86,7 @@ const LAZY_JS = `(async () => {
 
 async function main() {
   fs.mkdirSync(OUT, { recursive: true });
-  fs.rmSync(PROFILE, { recursive: true, force: true });
+  try { fs.rmSync(PROFILE, { recursive: true, force: true }); } catch {}
   const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--window-size=1600,1000', '--mute-audio', 'about:blank'], { stdio: 'ignore' });
   let version = null;
   for (let i = 0; i < 60 && !version; i++) { try { version = await getJson(`http://127.0.0.1:${PORT}/json/version`); } catch { await sleep(500); } }

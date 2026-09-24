@@ -289,7 +289,7 @@
 
   const rail = (() => {
     const el = $('#rail'), track = $('#railTrack');
-    let items = [], step = 1, pos = 0, vel = 0, target = 0, raf = 0, vertical = false;
+    let items = [], step = 1, pos = 0, vel = 0, target = 0, raf = 0, vertical = false, leadR = 0.5;
     let box = { w: 0, h: 0 }, exW = 0, exH = 0, gap = 0;
     let dragging = false, startPos = 0, startPt = 0, moved = false, samples = [], lastT = 0, pid = null, wheelAcc = 0, wheelLock = 0;
     const axis = e => (vertical ? e.clientY : e.clientX);
@@ -313,11 +313,27 @@
       if (vertical) {
         gap = 1.4 * R; exH = Math.round(box.h * 0.6); exW = Math.round(box.w - 4 * R);
         el.style.setProperty('--ph-w', Math.round((exH - 10) * 430 / 932 + 10) + 'px');
+        el.style.setProperty('--ex-w', exW + 'px'); el.style.setProperty('--ex-h', exH + 'px');
       } else {
         gap = 2.4 * R; exH = Math.round(box.h - 0.6 * R);
-        exW = Math.round(Math.min(box.w * 0.6, (exH - 6.2 * R) * 1.6));
+        const maxW = box.w * 0.58;
+        // Size the card from the height that is actually free. Set a provisional
+        // width, measure the caption (its height follows the font size, which on a
+        // short panel is small), then give the preview every pixel left over.
+        exW = Math.round(Math.min(maxW, (exH - 6 * R) * 1.6));
+        el.style.setProperty('--ex-w', exW + 'px'); el.style.setProperty('--ex-h', exH + 'px');
+        const cap = items.length ? items[0].node.querySelector('.ex-cap') : null;
+        const capH = cap ? cap.offsetHeight : 6 * R;          // offsetHeight ignores the scale transform
+        const frameH = Math.max(90, exH - capH - 0.9 * R);    // 0.9rem is the gap inside .exhibit
+        // On a very short panel let the preview crop a little rather than shrink
+        // the whole exhibit into the middle of a wide screen.
+        const minW = Math.min(box.w * 0.34, frameH * 2);
+        exW = Math.round(clamp(frameH * 1.6, Math.min(minW, maxW), maxW));
+        el.style.setProperty('--ex-w', exW + 'px');
       }
-      el.style.setProperty('--ex-w', exW + 'px'); el.style.setProperty('--ex-h', exH + 'px');
+      // On a wide panel the focused exhibit sits left of centre, so the journey
+      // reads as running to the right instead of leaving a void beside it.
+      leadR = (!vertical && innerWidth / innerHeight >= 1.95) ? 0.3 : 0.5;
       step = (vertical ? exH : exW) + gap;
       items.forEach((it, i) => {
         it.node.style.left = vertical ? Math.round((box.w - exW) / 2) + 'px' : Math.round(i * step) + 'px';
@@ -326,7 +342,7 @@
       pos = target = clamp(state.index, 0, Math.max(0, items.length - 1)) * step; vel = 0; render();
     }
     function render() {
-      const lead = vertical ? (box.h - exH) / 2 : (box.w - exW) / 2;
+      const lead = vertical ? (box.h - exH) / 2 : (box.w - exW) * leadR;
       const off = (lead - pos).toFixed(2);
       track.style.transform = vertical ? `translate3d(0, ${off}px, 0)` : `translate3d(${off}px, 0, 0)`;
       let nearest = 0, best = Infinity;

@@ -152,6 +152,21 @@ also fixes it, because the page then comes from the same site as the portal.)
 `Start Showroom (window).bat` opens the same thing in a normal browser window for checking edits.
 Press **F** for full screen there.
 
+### The screen
+
+The portal reads the panel it is on and picks one of three compositions. There is nothing to
+configure; rotating or swapping the monitor is enough.
+
+| Panel | What it does |
+| --- | --- |
+| **Portrait** (taller than wide) | Vertical journey. Exhibits are phone-shaped previews stacked top to bottom, with the story beside each one. |
+| **Landscape** up to about 2:1 | Horizontal journey. The focused exhibit sits centre stage with its neighbours peeking in. |
+| **Wide and short**, 21:9 and wider | The title and the capability filters share one row, so the exhibits get the height back, and the focused exhibit sits left of centre with more of the showroom visible ahead of it. |
+
+Type and spacing scale off the **short** side of the screen, so a wider panel buys more of the
+showroom in view rather than bigger text. Tested at 1920×1080, 2560×1080, 3840×1080, 1920×720 and
+1080×1920.
+
 ### Windows kiosk checklist
 
 - Rotate the display in *Settings → System → Display → Orientation* for portrait. The portal detects
@@ -257,8 +272,10 @@ With the local server running:
 
 ```bash
 node tools/preview.mjs 1920x1080
+node tools/preview.mjs 2560x1080
 node tools/preview.mjs 1080x1920
 ```
 
 writes one JPG per screen (home, stage, live viewer, screens viewer, map, search, attract) into
-`preview/`. Add `wipe` as a fifth argument to render frozen frames of the X transition.
+`preview/`. Pass the booth's real resolution to check it before an event. Add `wipe` as a fifth
+argument to render frozen frames of the X transition.

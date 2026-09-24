@@ -15,7 +15,9 @@ const [W, H] = (process.argv[2] || '1920x1080').split('x').map(Number);
 const OUT = path.resolve(process.argv[3] || path.join(ROOT, 'preview'));
 const URL = process.argv[4] || 'http://localhost:8765/';
 const PORT = 9344;
-const PROFILE = path.join(process.env.TEMP || 'C:/Temp', 'leanx-preview-profile');
+// A fresh profile per run: a previous headless Chrome that has not exited yet
+// keeps a lock on its own folder, and that must not block a QA render.
+const PROFILE = path.join(process.env.TEMP || 'C:/Temp', `leanx-preview-${process.pid}-${Date.now()}`);
 const CANDIDATES = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
@@ -58,7 +60,7 @@ class CDP {
 async function main() {
   if (!CHROME) throw new Error('Chrome/Edge not found');
   fs.mkdirSync(OUT, { recursive: true });
-  fs.rmSync(PROFILE, { recursive: true, force: true });
+  try { fs.rmSync(PROFILE, { recursive: true, force: true }); } catch {}
   const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', `--window-size=${W},${H}`, '--mute-audio', '--autoplay-policy=no-user-gesture-required', 'about:blank'], { stdio: 'ignore' });
   let version = null;
   for (let i = 0; i < 60 && !version; i++) { try { version = await getJson(`http://127.0.0.1:${PORT}/json/version`); } catch { await sleep(500); } }
@@ -88,5 +90,6 @@ async function main() {
   if (errors.length) console.log('PAGE ERRORS:\n' + errors.join('\n')); else console.log('no page errors');
   try { await cdp.send('Browser.close'); } catch {}
   chrome.kill();
+  try { fs.rmSync(PROFILE, { recursive: true, force: true }); } catch {}
 }
 main().catch(e => { console.error('FATAL', e); process.exit(1); });

@@ -31,7 +31,10 @@
   --chrome-h: 6rem; --gutter: 3rem; --tap: 3.6rem;
 }
 
-html { font-size: clamp(15px, calc(0.9vmax + 4px), 30px); }
+/* Type scales with the SHORT side of the screen, never the long one. On a wide,
+   short panel the height is what is scarce, so sizing off the width (vmax) would
+   inflate everything into the space that is not there. */
+html { font-size: clamp(14px, calc(1.5vmin + 4.2px), 30px); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
@@ -47,7 +50,7 @@ img { -webkit-user-drag: none; }
 /* ---------- Ambient environment ---------- */
 .ambient { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(120% 90% at 50% 110%, #0C141B 0%, var(--bg) 60%); }
 .ambient-glow {
-  position: absolute; width: 95vmax; height: 95vmax; border-radius: 50%; will-change: transform;
+  position: absolute; width: min(95vmax, 155vh); height: min(95vmax, 155vh); border-radius: 50%; will-change: transform;
   background-color: var(--accent); transition: background-color 1000ms var(--ease);
   -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,.35) 30%, transparent 62%);
   mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,.35) 30%, transparent 62%);
@@ -57,7 +60,7 @@ img { -webkit-user-drag: none; }
 @keyframes driftA { from { transform: translate3d(0,0,0) } to { transform: translate3d(9vmax, 6vmax, 0) } }
 @keyframes driftB { from { transform: translate3d(0,0,0) } to { transform: translate3d(-8vmax, -5vmax, 0) } }
 .ambient-floor { position: absolute; inset: auto 0 0 0; height: 45%; background: linear-gradient(to top, rgba(255,255,255,.035), transparent); }
-.ambient-x { position: absolute; right: -8vmax; bottom: -10vmax; width: 52vmax; fill: none; stroke: rgba(255,255,255,.045); stroke-width: .5; }
+.ambient-x { position: absolute; right: -6vmax; bottom: -10vh; width: min(52vmax, 76vh); fill: none; stroke: rgba(255,255,255,.045); stroke-width: .5; }
 
 /* ---------- Opening sequence ---------- */
 .boot { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: var(--bg); transition: background-color 320ms ease; }
@@ -124,7 +127,7 @@ body[data-screen="map"] #mapBtn, body[data-screen="viewer"] #mapBtn { display: n
 
 /* ---------- HOME ---------- */
 .home-head { padding: .4rem var(--gutter) 0; }
-.home-title { font-size: clamp(2.1rem, 3.4vmax, 4rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.02; margin: .45rem 0 .55rem; }
+.home-title { font-size: 2.9rem; font-weight: 700; letter-spacing: -.025em; line-height: 1.02; margin: .45rem 0 .55rem; }
 .home-hint { color: var(--muted); font-size: 1rem; display: flex; align-items: center; gap: .8rem; }
 .swipe-glyph { width: 3rem; height: .42rem; border-radius: 999px; background: rgba(255,255,255,.12); position: relative; overflow: hidden; flex: 0 0 auto; }
 .swipe-glyph i { position: absolute; top: 0; bottom: 0; left: 0; width: 42%; border-radius: 999px; background: var(--gold); animation: swipe 2s var(--ease) infinite; }
@@ -152,10 +155,13 @@ body[data-screen="map"] #mapBtn, body[data-screen="viewer"] #mapBtn { display: n
 .ex-live { position: absolute; top: 1rem; right: 1rem; height: 2rem; padding: 0 .8rem; border-radius: 999px; background: rgba(8,11,16,.6); color: var(--text); font-size: .72rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; display: inline-flex; align-items: center; gap: .45rem; border: 1px solid var(--line-2); }
 .ex-live i { width: .5rem; height: .5rem; border-radius: 50%; background: #3DDC84; box-shadow: 0 0 8px #3DDC84; }
 .ex-cap { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; padding: 0 .3rem; opacity: .55; transition: opacity var(--t) var(--ease); }
+.ex-cap > div { min-width: 0; }
 .exhibit.is-focus .ex-cap { opacity: 1; }
-.ex-num { font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: .2rem; }
-.ex-name { font-size: 1.7rem; font-weight: 700; letter-spacing: -.015em; line-height: 1.05; }
-.ex-kind { color: var(--muted); font-size: 1rem; margin-top: .15rem; }
+.ex-num { font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: .2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* One line each, so the caption block has a predictable height and the rail can
+   hand every remaining pixel to the preview above it. */
+.ex-name { font-size: 1.7rem; font-weight: 700; letter-spacing: -.015em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-kind { color: var(--muted); font-size: 1rem; margin-top: .15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ex-tag { display: none; }
 .ex-enter { flex: 0 0 auto; height: 3.1rem; padding: 0 1.25rem; border-radius: 999px; background: var(--gold); color: var(--gold-ink); font-weight: 700; font-size: .98rem; display: inline-flex; align-items: center; gap: .5rem; opacity: 0; transform: translateY(6px); transition: opacity var(--t) var(--ease), transform var(--t) var(--ease); box-shadow: 0 14px 34px -12px rgba(252,198,1,.6); }
 .ex-enter svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -175,7 +181,7 @@ body[data-screen="map"] #mapBtn, body[data-screen="viewer"] #mapBtn { display: n
 /* ---------- STAGE (project introduction) ---------- */
 .stage { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 10fr) minmax(0, 13fr); gap: 2.6rem; padding: .4rem var(--gutter) 1.4rem; }
 .stage-info { display: flex; flex-direction: column; min-height: 0; gap: 1.1rem; }
-.stage-name { font-size: clamp(2.3rem, 4.2vmax, 4.8rem); font-weight: 800; letter-spacing: -.03em; line-height: .98; margin-top: .3rem; }
+.stage-name { font-size: 3.9rem; font-weight: 800; letter-spacing: -.03em; line-height: .98; margin-top: .3rem; }
 .stage-tagline { font-size: 1.32rem; line-height: 1.3; font-weight: 400; color: var(--text); opacity: .92; max-width: 30ch; }
 .stage-meta { display: flex; flex-wrap: wrap; gap: .5rem 1.6rem; color: var(--muted); font-size: .9rem; }
 .stage-meta b { color: var(--text); font-weight: 600; }
@@ -247,7 +253,7 @@ body[data-screen="map"] #mapBtn, body[data-screen="viewer"] #mapBtn { display: n
 
 /* ---------- MAP ---------- */
 .map-head { padding: .4rem var(--gutter) .4rem; }
-.map-title { font-size: clamp(1.8rem, 3vmax, 3.2rem); font-weight: 700; letter-spacing: -.02em; margin: .35rem 0 .3rem; }
+.map-title { font-size: 2.5rem; font-weight: 700; letter-spacing: -.02em; margin: .35rem 0 .3rem; }
 .map-hint { color: var(--muted); font-size: .98rem; }
 .map-groups { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; padding: .4rem var(--gutter) 3rem; scrollbar-width: none; }
 .map-groups::-webkit-scrollbar { display: none; }
@@ -344,6 +350,9 @@ body[data-orient="portrait"] .ex-frame img.for-portrait { display: block; }
 body[data-orient="portrait"] .ex-badge, body[data-orient="portrait"] .ex-live { top: .9rem; left: .9rem; right: auto; }
 body[data-orient="portrait"] .ex-live { top: auto; bottom: .9rem; }
 body[data-orient="portrait"] .ex-cap { flex: 1; flex-direction: column; align-items: flex-start; justify-content: center; gap: .7rem; padding: 0; }
+body[data-orient="portrait"] .ex-name,
+body[data-orient="portrait"] .ex-kind,
+body[data-orient="portrait"] .ex-num { white-space: normal; overflow: visible; }
 body[data-orient="portrait"] .ex-name { font-size: clamp(1.6rem, 4.4vmin, 2.6rem); }
 body[data-orient="portrait"] .ex-kind { font-size: 1rem; }
 body[data-orient="portrait"] .ex-tag { display: block; color: var(--muted); font-size: 1rem; line-height: 1.35; margin-top: .2rem; }
@@ -385,9 +394,54 @@ body[data-orient="portrait"] .search-results { grid-template-columns: 1fr; }
 body[data-orient="portrait"] .key { height: 3.6rem; max-width: none; }
 body[data-orient="portrait"] .key--wide { max-width: none; }
 
-/* Very short landscape screens (e.g. 16:9 at low height) */
+/* =====================================================================
+   WIDE, SHORT PANELS (21:9 and wider)
+   A third composition. Height is the scarce dimension, so the title and
+   the capability lenses share one row and the exhibits take everything
+   that is left. Nothing is stretched; the extra width buys more of the
+   showroom in view at once.
+   ===================================================================== */
+@media (min-aspect-ratio: 39/20) {
+  :root { --gutter: 3.4rem; }
+  .screen--home.is-active {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "head lenses" "rail rail" "foot foot";
+    column-gap: 2rem;
+  }
+  /* Only the header row hugs the baseline. The rail must stretch: its exhibits
+     are absolutely positioned, so it has no height of its own to fall back on. */
+  .home-head { grid-area: head; align-self: end; padding-bottom: .1rem; }
+  .home-title { font-size: 2.6rem; margin: .35rem 0 .45rem; }
+  .lenses {
+    grid-area: lenses; align-self: end; justify-content: flex-end; flex-wrap: wrap;
+    row-gap: .5rem; padding: 0 var(--gutter) .5rem 0; overflow: visible;
+    -webkit-mask-image: none; mask-image: none;
+  }
+  .rail { grid-area: rail; align-self: stretch; min-height: 0; }
+  .rail-foot { grid-area: foot; align-self: end; padding-top: .5rem; }
+
+  /* The stage gives the extra width to the preview, not to longer lines. */
+  .stage { grid-template-columns: minmax(0, 9fr) minmax(0, 14fr); gap: 3.2rem; }
+  .stage-tagline { max-width: 32ch; }
+  .stage-desc { max-width: 50ch; }
+
+  /* The map keeps a composed content column with fewer, larger tiles, instead of
+     scattering small ones across tracks that most capability groups cannot fill. */
+  .map-groups, .map-head { max-width: 108rem; margin-inline: auto; width: 100%; }
+  .map-grid { grid-template-columns: repeat(auto-fill, minmax(min(24rem, 100%), 1fr)); }
+  .frames-side { padding: 2.4rem; }
+}
+
+/* Very short landscape screens (e.g. a 16:9 panel at low height) */
 @media (orientation: landscape) and (max-height: 700px) {
-  :root { --chrome-h: 5rem; }
-  .home-title { font-size: clamp(1.6rem, 3vmax, 2.6rem); margin: .2rem 0 .3rem; }
+  :root { --chrome-h: 5rem; --tap: 3.3rem; }
+  .home-title { font-size: 2.3rem; margin: .2rem 0 .3rem; }
+  .home-hint { font-size: .9rem; }
   .lenses { padding-top: .5rem; }
+  .lens { height: 2.8rem; }
+  .rail-foot { padding: .4rem var(--gutter) .9rem; }
+  .key { height: 3rem; }
+  .stage-actions .btn { height: 3.5rem; }
 }
