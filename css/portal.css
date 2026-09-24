@@ -413,8 +413,7 @@ body[data-orient="portrait"] .key--wide { max-width: none; }
    that is left. Nothing is stretched; the extra width buys more of the
    showroom in view at once.
    ===================================================================== */
-@media (min-aspect-ratio: 39/20) {
-  :root { --gutter: 3.4rem; }
+@media (min-aspect-ratio: 39/20), (orientation: landscape) and (max-height: 660px) {
   .screen--home.is-active {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -438,15 +437,18 @@ body[data-orient="portrait"] .key--wide { max-width: none; }
   .stage { grid-template-columns: minmax(0, 9fr) minmax(0, 14fr); gap: 3.2rem; }
   .stage-tagline { max-width: 32ch; }
   .stage-desc { max-width: 50ch; }
+}
 
-  /* The map keeps a composed content column with fewer, larger tiles, instead of
-     scattering small ones across tracks that most capability groups cannot fill. */
+/* A wide panel also composes the grid screens into a content column, rather
+   than scattering small tiles across tracks most groups cannot fill. */
+@media (min-aspect-ratio: 39/20) {
+  :root { --gutter: 3.4rem; }
   .map-groups, .map-head { max-width: 108rem; margin-inline: auto; width: 100%; }
   .map-grid { grid-template-columns: repeat(auto-fill, minmax(min(24rem, 100%), 1fr)); }
   .frames-side { padding: 2.4rem; }
 }
 
-/* Very short landscape screens (e.g. a 16:9 panel at low height) */
+/* Short landscape screens (a 16:9 panel at low height, or a stretched panel) */
 @media (orientation: landscape) and (max-height: 700px) {
   :root { --chrome-h: 5rem; --tap: 3.3rem; }
   .home-title { font-size: 2.3rem; margin: .2rem 0 .3rem; }
@@ -456,4 +458,91 @@ body[data-orient="portrait"] .key--wide { max-width: none; }
   .rail-foot { padding: .4rem var(--gutter) .9rem; }
   .key { height: 3rem; }
   .stage-actions .btn { height: 3.5rem; }
+}
+
+/* =====================================================================
+   BAR PANELS — stretched displays, around half the height of a 1080p screen
+   A fourth composition. There is no room to stack a caption beneath the
+   preview, so the exhibit turns on its side: preview left, story right,
+   and the preview keeps the full height of the rail. The header carries
+   only what a passer-by actually needs to read.
+   ===================================================================== */
+@media (orientation: landscape) and (max-height: 620px) {
+  :root { --chrome-h: 4.2rem; --gutter: 2.2rem; --tap: 3rem; }
+  .wordmark { height: 2rem; }
+  .home-head .eyebrow, .home-hint { display: none; }
+  .home-title { font-size: 1.8rem; margin: 0 0 .15rem; line-height: 1.05; }
+  .lenses { padding-bottom: .35rem; }
+  .lens { height: 2.5rem; font-size: .88rem; padding: 0 .9rem; }
+
+  .exhibit { flex-direction: row; gap: 1.1rem; align-items: stretch; }
+  .ex-frame { flex: 0 0 auto; width: var(--fr-w); }
+  .ex-cap { flex: 1; min-width: 0; flex-direction: column; align-items: flex-start; justify-content: center; gap: .4rem; padding: 0; }
+  .ex-name { font-size: 1.5rem; white-space: normal; }
+  .ex-kind { white-space: normal; font-size: .95rem; }
+  .ex-tag { display: block; color: var(--muted); font-size: .92rem; line-height: 1.3; }
+  .ex-enter { margin-top: .3rem; height: 2.8rem; font-size: .92rem; }
+
+  .rail-foot { padding: .25rem var(--gutter) .6rem; }
+  .round-btn { width: 3rem; height: 3rem; }
+  .rail-counter b { font-size: 1.15rem; }
+
+  /* The stage keeps the answer and drops the supporting detail it cannot fit. */
+  .stage { gap: 2rem; padding-bottom: .7rem; }
+  .stage-info { gap: .5rem; }
+  .stage-name { font-size: 2.4rem; }
+  .stage-tagline { font-size: 1.05rem; }
+  .stage-desc { font-size: .92rem; }
+  .stage-hl, .stage-meta { display: none; }
+  .stage-actions { gap: .7rem; padding-top: .3rem; }
+  .stage-actions .btn { height: 3.1rem; font-size: 1rem; }
+  .stage-qr .qr { width: 3.6rem; height: 3.6rem; }
+  .switch-btn { height: 2.8rem; }
+  .chip { height: 1.9rem; font-size: .8rem; }
+
+  /* The keyboard must not eat the results. */
+  .search { padding: .6rem var(--gutter); }
+  .search-panel { gap: .5rem; }
+  .search-field, .search-close { height: 3.2rem; }
+  .search-field { font-size: 1.2rem; }
+  .keyboard, .kb-row { gap: .3rem; }
+  .key { height: 2.5rem; font-size: 1.05rem; border-radius: .6rem; }
+  .result { min-height: 4.2rem; }
+  .quick { height: 2.2rem; }
+
+  .idle-card { padding: 1.4rem; }
+  .idle-card h3 { font-size: 1.4rem; margin-top: .5rem; }
+  .idle-x { width: 2.4rem; }
+  .idle-actions { margin-top: 1rem; }
+  .btn { height: 3.1rem; font-size: 1rem; }
+  .viewer-qr .qr { width: 3.2rem; height: 3.2rem; }
+
+  /* The screens viewer: its side panel has to fit, QR and Back included. */
+  .frames { grid-template-columns: minmax(0, 1fr) 17rem; }
+  .frames-side { padding: 1.2rem; gap: .55rem; }
+  .frames-side h3 { font-size: 1.15rem; }
+  .frames-side p { font-size: .86rem; }
+  .frames-side .qr { width: min(100%, 7.5rem); padding: .4rem; }
+  .frames-side .btn { height: 2.8rem; font-size: .9rem; }
+  .frame-slide { padding: .9rem; }
+}
+
+/* Extremely short bars: keep the name, the picture and the way in. */
+@media (orientation: landscape) and (max-height: 430px) {
+  :root { --chrome-h: 3.5rem; --tap: 2.8rem; --gutter: 1.6rem; }
+  .home-btn-label { display: none; }
+  .home-title { font-size: 1.4rem; }
+  .lens { height: 2.2rem; font-size: .82rem; }
+  .ex-tag { display: none; }
+  .ex-name { font-size: 1.25rem; }
+  .ex-enter { height: 2.5rem; }
+  .rail-progress { display: none; }
+  .stage-name { font-size: 1.9rem; }
+  .stage-note { display: none; }
+  .search-quick { display: none; }
+  .key { height: 2.2rem; font-size: .95rem; }
+  .gate p { font-size: .85rem; }
+  .frames-why { display: none; }
+  .frames-side .qr { width: min(100%, 6rem); }
+  .frames { grid-template-columns: minmax(0, 1fr) 15rem; }
 }

@@ -161,11 +161,15 @@ configure; rotating or swapping the monitor is enough.
 | --- | --- |
 | **Portrait** (taller than wide) | Vertical journey. Exhibits are phone-shaped previews stacked top to bottom, with the story beside each one. |
 | **Landscape** up to about 2:1 | Horizontal journey. The focused exhibit sits centre stage with its neighbours peeking in. |
-| **Wide and short**, 21:9 and wider | The title and the capability filters share one row, so the exhibits get the height back, and the focused exhibit sits left of centre with more of the showroom visible ahead of it. |
+| **Wide**, 21:9 and wider | The title and the capability filters share one row, so the exhibits get the height back, and the focused exhibit sits left of centre with more of the showroom visible ahead of it. |
+| **Bar**, under about 620px tall | For stretched panels. The exhibit turns on its side: preview on the left at the full height of the rail, name and story beside it. Below about 430px tall it trims down to the name, the picture and the way in. |
 
 Type and spacing scale off the **short** side of the screen, so a wider panel buys more of the
-showroom in view rather than bigger text. Tested at 1920×1080, 2560×1080, 3840×1080, 1920×720 and
-1080×1920.
+showroom in view rather than bigger text. Tested at 1920×1080, 2560×1080, 3840×1080, 2560×600,
+1920×720, 1920×540, 1920×360 and 1080×1920.
+
+**Not sure what the booth panel is?** Open the portal on it and press **`I`**. It reports its own
+size and which of the four compositions it is using, for example `1920 × 540 · bar layout`.
 
 ### Windows kiosk checklist
 
@@ -212,7 +216,7 @@ uses a longer timeout plus a prompt instead of a silent reset.
 ### Staff shortcuts (keyboard)
 
 `F` full screen · `H` or `Home` home · `Esc` back / close · `/` or `S` search · `M` all projects ·
-arrow keys move the showroom · `Enter` opens the focused project.
+`I` screen size and layout · arrow keys move the showroom · `Enter` opens the focused project.
 
 The browser console also exposes `showroom` (for example `showroom.open('sxan')`,
 `showroom.home(true)`, `showroom.lens('interactive')`).

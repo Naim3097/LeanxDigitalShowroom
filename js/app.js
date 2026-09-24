@@ -75,6 +75,20 @@
   /* ------------------------------------------------------------------
      Orientation
   ------------------------------------------------------------------ */
+  // Below this viewport height the landscape layout switches to the bar
+  // composition. Keep in step with the matching media queries in portal.css.
+  const BAR_HEIGHT = 620;
+
+  // Which of the four compositions the current screen gets. Shown by the `I`
+  // shortcut, so a booth screen can report its own size during setup.
+  function layoutLabel() {
+    if (state.orient === 'portrait') return 'portrait';
+    if (innerHeight <= 430) return 'short bar';
+    if (innerHeight <= BAR_HEIGHT) return 'bar';
+    if (innerWidth / innerHeight >= 1.95) return 'wide';
+    return 'landscape';
+  }
+
   function applyOrient() {
     state.orient = innerHeight > innerWidth ? 'portrait' : 'landscape';
     body.dataset.orient = state.orient;
@@ -314,6 +328,19 @@
         gap = 1.4 * R; exH = Math.round(box.h * 0.6); exW = Math.round(box.w - 4 * R);
         el.style.setProperty('--ph-w', Math.round((exH - 10) * 430 / 932 + 10) + 'px');
         el.style.setProperty('--ex-w', exW + 'px'); el.style.setProperty('--ex-h', exH + 'px');
+      } else if (innerHeight <= BAR_HEIGHT) {
+        // Bar panel: there is no height to stack a caption under the preview, so
+        // the exhibit lies on its side and the preview keeps the whole rail.
+        gap = 2 * R;
+        exH = Math.round(box.h - 0.4 * R);
+        const maxW = box.w * 0.62;
+        const capW = clamp(box.w * 0.17, 13 * R, 21 * R);   // room for the story beside it
+        let frameW = exH * 1.6;
+        if (frameW + capW + 1.1 * R > maxW) frameW = Math.max(140, maxW - capW - 1.1 * R);
+        exW = Math.round(frameW + capW + 1.1 * R);
+        el.style.setProperty('--fr-w', Math.round(frameW) + 'px');
+        el.style.setProperty('--ex-w', exW + 'px');
+        el.style.setProperty('--ex-h', exH + 'px');
       } else {
         gap = 2.4 * R; exH = Math.round(box.h - 0.6 * R);
         const maxW = box.w * 0.58;
@@ -826,6 +853,7 @@
       else if (e.key === 'h' || e.key === 'H' || e.key === 'Home') goHome(centreOf($('#homeBtn')));
       else if (e.key === '/' || e.key === 's' || e.key === 'S') { e.preventDefault(); openSearch(); }
       else if (e.key === 'm' || e.key === 'M') openMap(centreOf($('#mapBtn')));
+      else if (e.key === 'i' || e.key === 'I') toast(`${innerWidth} × ${innerHeight} · ${layoutLabel()} layout`, 6000);
       else if (state.screen === 'home' && (e.key === 'ArrowRight' || e.key === 'ArrowDown')) rail.setIndex(state.index + 1);
       else if (state.screen === 'home' && (e.key === 'ArrowLeft' || e.key === 'ArrowUp')) rail.setIndex(state.index - 1);
       else if (state.screen === 'home' && e.key === 'Enter') { const p = state.list[state.index]; if (p) openProject(p, null); }
@@ -871,6 +899,7 @@
     goto: i => rail.setIndex(i),
     attract: startAttract, stopAttract,
     fullscreen: toggleFullscreen,
+    info: () => ({ width: innerWidth, height: innerHeight, layout: layoutLabel(), orientation: state.orient }),
     debugWipe,
   };
 
