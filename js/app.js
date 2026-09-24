@@ -744,9 +744,58 @@
     if (state.screen === 'map') return;
     return guarded(async () => { closeSearch(); await xWipe(origin, () => showScreen('map')); $('#mapGroups').scrollTop = 0; });
   }
-  function toggleFullscreen() {
-    if (document.fullscreenElement) { if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); }
-    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+  /* ------------------------------------------------------------------
+     Fullscreen. Three things can happen and the visitor must be able to
+     tell them apart:
+       - it works        -> the button flips to an "exit" icon
+       - already full    -> Chrome's --kiosk flag already fills the display,
+                            so the Fullscreen API has nothing to add and the
+                            button hides itself rather than sitting there dead
+       - it is refused   -> some embedded browsers neither grant the request
+                            nor reject it, leaving the promise unsettled
+                            forever, so silence is treated as a failure and
+                            the visitor is told what to press instead
+  ------------------------------------------------------------------ */
+  let toastTimer = 0;
+  function toast(msg, ms = 4200) {
+    const el = $('#toast'); if (!el) return;
+    el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, ms);
+  }
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+  const windowFillsScreen = () =>
+    !!screen.width && Math.abs(innerWidth - screen.width) <= 4 && Math.abs(innerHeight - screen.height) <= 4;
+
+  function syncFullscreen() {
+    const on = !!fsElement();
+    body.classList.toggle('is-fs', on);
+    const btn = $('#fullscreenBtn'); if (!btn) return;
+    btn.setAttribute('aria-label', on ? 'Exit fullscreen' : 'Fullscreen');
+    btn.hidden = !on && windowFillsScreen();
+  }
+
+  async function toggleFullscreen() {
+    const el = document.documentElement;
+    try {
+      if (fsElement()) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) await exit.call(document);
+      } else {
+        const req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (!req) throw new Error('unsupported');
+        await Promise.race([
+          Promise.resolve(req.call(el, { navigationUI: 'hide' })),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), 1500)),
+        ]);
+      }
+    } catch (e) {
+      if (!fsElement()) {
+        toast(windowFillsScreen()
+          ? 'Already filling the whole screen.'
+          : 'This browser would not switch to fullscreen. Press F11 instead.');
+      }
+    }
+    syncFullscreen();
   }
 
   /* ------------------------------------------------------------------
@@ -782,10 +831,16 @@
       else if (state.screen === 'home' && e.key === 'Enter') { const p = state.list[state.index]; if (p) openProject(p, null); }
     });
 
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    document.addEventListener('webkitfullscreenchange', syncFullscreen);
+
     let resizeT = 0;
     window.addEventListener('resize', () => {
       clearTimeout(resizeT);
-      resizeT = setTimeout(() => { applyOrient(); if (state.screen === 'home') rail.layout(); else state.railDirty = true; }, 80);
+      resizeT = setTimeout(() => {
+        applyOrient(); syncFullscreen();
+        if (state.screen === 'home') rail.layout(); else state.railDirty = true;
+      }, 80);
     });
     document.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('error', e => console.error('Showroom error:', e.message));
@@ -798,6 +853,7 @@
     rail.build(state.list);
     $('#railLensLabel').textContent = 'All projects';
     bind();
+    syncFullscreen();
     boot();
     probeProxies();
   }

@@ -172,6 +172,10 @@ showroom in view rather than bigger text. Tested at 1920×1080, 2560×1080, 3840
 - Rotate the display in *Settings → System → Display → Orientation* for portrait. The portal detects
   the orientation itself; there is no setting inside it.
 - Turn off screen sleep and screen saver (*Settings → System → Power*).
+- The kiosk launcher already runs Chrome full screen, so the fullscreen button hides itself: it
+  only appears when there is something for it to do. In a normal window it switches to an "exit"
+  icon while full screen. If a browser refuses the request, the portal says so on screen and points
+  at `F11` rather than leaving a button that does nothing.
 - The portal draws its own touch keyboard for search, so the Windows touch keyboard can stay off.
 - The kiosk needs internet for the live sites. The shell, fonts, previews and QR codes are local and
   keep working when the connection is slow or absent.
