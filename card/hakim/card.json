@@ -1,0 +1,18 @@
+{
+  "slug": "hakim",
+  "file": "muhammad-hakim.vcf",
+  "name": { "given": "Muhammad Hakim", "family": "Bin Mansor", "full": "Muhammad Hakim Bin Mansor" },
+  "title": "Head Of Commercial & Account Management",
+  "org": "Leanx Digital",
+  "phone": { "display": "010-764 8227", "e164": "+60107648227" },
+  "email": "sales@leanxdigital.io",
+  "website": "https://www.leanxdigital.io",
+  "address": {
+    "street": "Unit 11, Level 21, Tower 2, Atrium, Jalan Cempaka SD12/5",
+    "city": "Bandar Sri Damansara",
+    "region": "Kuala Lumpur",
+    "postcode": "52200",
+    "country": "Malaysia"
+  },
+  "photo": "assets/brand/icon-192.png"
+}

@@ -37,6 +37,29 @@ full-screen on a tablet.
 
 ---
 
+## Digital business cards
+
+Each card lives at `/card/<name>/` and is reached only by its URL (nothing in the showroom links
+to it). Scanning the printed QR opens the page; **Save contact** opens a vCard that iPhones add
+straight to Contacts and Android imports from the download.
+
+- `card/<name>/card.json` — the details (name, title, phone, email, address, website).
+- `card/<name>/index.html` — the page, styled by `css/card.css` to match the printed card.
+- `card/<name>/<name>.vcf` — generated, do not edit by hand.
+- `assets/card/<name>-qr.svg` and `.png` — generated, for print.
+
+After editing `card.json`, regenerate (the QR needs the live address of the card):
+
+```bash
+node tools/make-card.mjs hakim --url=https://<deployed-address>/card/hakim
+```
+
+The QR encodes only the URL, so details can change without reprinting. `vercel.json` serves the
+vCard as `text/vcard`, which is what makes iOS open Contacts; `sw.js` leaves `/card/` alone so
+the booth's offline cache never serves the kiosk page in its place.
+
+---
+
 ## Sites that refuse to be embedded
 
 Three of the fourteen projects needed a decision. Run the checker any time to see where each one

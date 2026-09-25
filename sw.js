@@ -45,6 +45,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;          // live client sites: untouched
   if (url.pathname.startsWith('/__leanx/')) return;         // local proxy status: never cached
+  if (url.pathname.startsWith('/card/')) return;            // digital business cards: not the booth, never cached
 
   if (isAsset(url)) {
     // Cache first, then refresh quietly in the background.
