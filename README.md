@@ -86,6 +86,21 @@ it, and there is no flag or setting on the kiosk that changes it. The header exi
 strangers from framing the site and tricking people into clicking through it, which is worth keeping
 for the public internet. What we want is a narrow exception for our own showroom.
 
+**FTECH currently takes the other route:** `openExternal: true` in `js/projects.js`, so "Experience
+it" opens the real site in its own tab instead of showing its screens. The showroom keeps a handle
+on that tab, stays waiting behind it, and closes it when it returns home, whether a visitor presses
+Home or the booth is simply left alone. That matters on a kiosk, where there is no tab bar for a
+visitor to close it with. Three things to know:
+
+- Staff can close it directly with `Ctrl+W`.
+- The tab runs the same clock a live site inside the portal runs (`idleViewer`, 150s by default).
+  A hidden page cannot show the "still exploring?" prompt, so when the time is up the tab simply
+  closes and the showroom comes back. Change `idleViewer` in `js/app.js` to adjust.
+- If a browser blocks the new tab, the portal says so and falls back to the screens by itself.
+
+Set `openExternal: true` on any project to get this. Fixing the header below is still the better
+end state, because the site then opens inside the portal with Back and Home always visible.
+
 **The fix is on those two sites, and it is small.** `X-Frame-Options` cannot name a third-party
 origin: `ALLOW-FROM` was dropped by Chrome years ago. So remove that header and express the rule
 with `Content-Security-Policy: frame-ancestors` instead, which does take an allowlist. Both sites are
@@ -119,9 +134,10 @@ node tools/check-embed.mjs ftech --kiosk=https://showroom.leanxdigital.io
 ```
 
 When it reports `LIVE`, set `embed: true` for that project in `js/projects.js` and remove its
-`embedBlocked` line. Nothing else changes: the showroom starts opening it live.
+`embedBlocked` and `openExternal` lines. Nothing else changes: the showroom starts opening it inside
+the portal.
 
-Until then both are presented as full-screen captured screens with a QR code, and the viewer states
+Until then Nexova is presented as full-screen captured screens with a QR code, and the viewer states
 the reason on screen, so the booth can answer the question honestly.
 
 ### The local proxy (an alternative, if you cannot redeploy those sites)

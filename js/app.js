@@ -37,6 +37,7 @@
     return null;
   };
   const ARROW = '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  const EXTERNAL_ARROW = '<svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></svg>';
   const ARROW_L = '<svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>';
   const XICON = '<svg viewBox="0 0 110 100"><use href="#xmark"/></svg>';
 
@@ -52,6 +53,9 @@
   ------------------------------------------------------------------ */
   const PROXY = { ports: {} };
   function canEmbed(p) { return !!(p && p.embed && (!p.proxy || PROXY.ports[p.id])); }
+  // A site that refuses to be framed but should still open live, in its own tab.
+  function opensExternally(p) { return !!(p && p.openExternal && !canEmbed(p)); }
+  function opensLive(p) { return canEmbed(p) || opensExternally(p); }
   function viewerSrc(p) {
     const port = p.proxy && PROXY.ports[p.id];
     if (!port) return p.url;
@@ -214,6 +218,7 @@
   function activity() { if (!state.booted) return; stopAttract(); scheduleIdle(); }
   function scheduleIdle() {
     clearTimeout(idleTimer); clearTimeout(attractTimer);
+    if (externalOpen()) return;   // that tab runs its own clock, see watchExternal
     if (state.screen === 'home' && !searchOpen) { attractTimer = setTimeout(startAttract, CONFIG.attractAfter); return; }
     // Only a live site times out: stage, map, follow and search stay where the visitor left them.
     if (state.screen === 'viewer') idleTimer = setTimeout(onIdle, CONFIG.idleViewer);
@@ -292,6 +297,7 @@
         <div class="ex-shade"></div>
         ${p.featured ? '<span class="ex-badge">Featured</span>' : ''}
         ${canEmbed(p) ? '<span class="ex-live"><i></i>Live</span>' : ''}
+        ${opensExternally(p) ? '<span class="ex-live"><i></i>Live &#8599;</span>' : ''}
       </div>
       <div class="ex-cap">
         <div>
@@ -479,12 +485,14 @@
     const idx = state.list.indexOf(p), n = state.list.length;
     const prev = n > 1 && idx >= 0 ? state.list[(idx - 1 + n) % n] : null;
     const next = n > 1 && idx >= 0 ? state.list[(idx + 1) % n] : null;
-    const live = canEmbed(p);
+    const live = canEmbed(p), external = opensExternally(p);
     const note = live
       ? (p.access === 'private'
         ? 'Opens live here. It is our own tool, so ask us to unlock it and we will audit your site on this screen.'
         : 'Opens live, right here in the showroom.')
-      : 'This site does not allow itself to be displayed inside another page, so the showroom presents its screens. Scan the code to open it on your phone.';
+      : external
+        ? 'This site cannot be displayed inside another page, so it opens live in its own tab. The showroom stays waiting behind it.'
+        : 'This site does not allow itself to be displayed inside another page, so the showroom presents its screens. Scan the code to open it on your phone.';
     sec.innerHTML = `
       <div class="stage" style="--ac:${esc(p.accent || '#32A4BD')}">
         <div class="stage-info">
@@ -494,9 +502,9 @@
           <div class="chips">${(p.capabilities || []).map(id => capById[id] ? `<span class="chip" style="--h:${capById[id].hue}"><i></i>${esc(capById[id].label)}</span>` : '').join('')}</div>
           <div class="stage-block"><h4>What we built</h4><p class="stage-desc">${esc(p.description)}</p></div>
           <ul class="stage-hl">${(p.highlights || []).map(h => `<li>${XICON}${esc(h)}</li>`).join('')}</ul>
-          <div class="stage-meta"><span>Client <b>${esc(p.client || p.name)}</b></span><span>Language <b>${esc(p.lang || 'EN')}</b></span><span>Showroom <b>${live ? 'Live site' : 'Screens'}</b></span></div>
+          <div class="stage-meta"><span>Client <b>${esc(p.client || p.name)}</b></span><span>Language <b>${esc(p.lang || 'EN')}</b></span><span>Showroom <b>${live ? 'Live site' : external ? 'Live, in its own tab' : 'Screens'}</b></span></div>
           <div class="stage-actions">
-            <button class="btn btn--gold" id="enterBtn">${live ? 'Experience it' : 'See the screens'} ${ARROW}</button>
+            <button class="btn btn--gold" id="enterBtn">${live || external ? 'Experience it' : 'See the screens'} ${external ? EXTERNAL_ARROW : ARROW}</button>
             <div class="stage-qr"><div class="qr" id="stageQr"></div><small>Scan to open on your phone</small></div>
             <div class="stage-portrait-switch">
               ${prev ? `<button class="round-btn" data-switch="${prev.id}" aria-label="Previous project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>` : ''}
@@ -775,13 +783,55 @@
       await xWipe(origin, () => showScreen('stage'));
     });
   }
-  function enterProject(p, origin) {
+  /* A site that cannot be framed but should still be seen live opens in its own
+     tab. The window handle is kept (so no `noopener` here) for one reason: when
+     the showroom resets, it closes that tab and comes back by itself. Without
+     that, a visitor on a kiosk with no tab bar would have no way back. */
+  let externalWin = null, externalTimer = 0, externalPoll = 0;
+  const externalOpen = () => !!(externalWin && !externalWin.closed);
+
+  function openExternalSite(p) {
+    let w = null;
+    try { w = window.open(p.url, 'leanxExternal'); } catch (e) { w = null; }
+    if (!w) {                       // blocked by the browser: show the screens instead
+      toast('The browser blocked the new tab, so here are its screens.');
+      return enterProject(p, null, true);
+    }
+    externalWin = w;
+    try { w.focus(); } catch (e) {}
+    toast(`${p.name} opened in its own tab. Close it to come back, or the showroom will.`, 6000);
+    watchExternal();
+  }
+
+  // While the other tab has the screen, this page cannot see the visitor, so it
+  // runs the same clock a live site inside the portal runs. The difference is
+  // that a hidden page cannot show the "still exploring?" prompt, so when the
+  // time is up the tab is closed and the showroom comes back by itself. Without
+  // it an abandoned kiosk would sit on a client's site for the rest of the day.
+  function watchExternal() {
+    stopWatchingExternal();
+    externalPoll = setInterval(() => {
+      if (!externalOpen()) { stopWatchingExternal(); scheduleIdle(); }
+    }, 2000);
+    externalTimer = setTimeout(() => { closeExternalSite(); resetToHome(); }, CONFIG.idleViewer);
+  }
+  function stopWatchingExternal() {
+    clearInterval(externalPoll); clearTimeout(externalTimer); externalPoll = externalTimer = 0;
+  }
+  function closeExternalSite() {
+    stopWatchingExternal();
+    if (externalOpen()) { try { externalWin.close(); } catch (e) {} }
+    externalWin = null;
+  }
+
+  function enterProject(p, origin, forceScreens) {
+    if (opensExternally(p) && !forceScreens) return openExternalSite(p);
     return guarded(async () => { renderViewer(p); await xWipe(origin, () => showScreen('viewer')); });
   }
   function goHome(origin, reset) {
     if (state.screen === 'home' && !reset) { rail.setIndex(0); return; }
     return guarded(async () => {
-      closeSearch(); hidePrompt();
+      closeSearch(); hidePrompt(); closeExternalSite();
       await xWipe(origin, () => {
         showScreen('home');
         if (reset) { if (state.lens !== 'all') setLens('all'); state.index = 0; }

@@ -34,6 +34,11 @@
                    Check any site with:  node tools/check-embed.mjs
      embedBlocked  why embedding is refused (shown in the viewer, so the booth
                    can answer the question honestly)
+     openExternal  true = "Experience it" opens the real site in a new tab
+                   instead of showing its captured screens. For a site that
+                   refuses to be framed but should still be seen live. The
+                   showroom keeps a handle on that window and closes it when
+                   it returns home, so a visitor is never left stranded in it.
      access        "public" | "private" (private = the site needs a team login;
                    the viewer shows a bar explaining it, not a bare password box)
      gate          for a login-gated site: { note } shown over the viewer
@@ -194,6 +199,7 @@ window.LEANX_PROJECTS = [
     tags: ['lighting', 'corporate', 'engineering', 'portfolio', 'CMS', 'industrial', 'commercial', 'brand', 'architecture'],
     accent: '#C0272D', embed: false, access: 'public', lang: 'EN',
     embedBlocked: 'ftechlighting.com sends X-Frame-Options: DENY',
+    openExternal: true,
   },
   {
     id: 'tongroro', order: 12, featured: false,
