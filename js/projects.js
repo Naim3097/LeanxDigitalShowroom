@@ -238,6 +238,18 @@ window.LEANX_PROJECTS = [
     accent: '#7C5CFF', embed: true, access: 'private', lang: 'EN',
     gate: { note: 'DISCOVA is our own tool, so it opens behind a team sign-in. Ask any of us to unlock it and we will audit your website right here.' },
   },
+  {
+    id: 'firstclass', order: 15, featured: false,
+    name: 'First Class Credit', client: 'First Class Credit',
+    tagline: 'Your next ride, financed the straightforward way.',
+    url: 'https://firstclasscredit.com.my/',
+    kind: 'Financing site with application flow', industry: 'Hire purchase financing',
+    capabilities: ['web', 'apps'],
+    description: 'A bilingual site for a licensed hire purchase financier in Kuching, covering motorcycle and smartphone financing. Rates, margins and fees are laid out in the open, and a three-step application form collects everything needed for a pre-approval.',
+    highlights: ['Three-step application flow', 'EN / BM, managed in a CMS', 'Rates and fees stated up front'],
+    tags: ['financing', 'finance', 'loan', 'credit', 'hire purchase', 'HP', 'motorcycle', 'motor', 'bike', 'smartphone', 'fintech', 'application', 'form', 'bilingual', 'CMS', 'Sarawak', 'Kuching', 'lead generation'],
+    accent: '#2C76BB', embed: true, access: 'public', lang: 'EN · BM',
+  },
 ];
 
 /* =====================================================================

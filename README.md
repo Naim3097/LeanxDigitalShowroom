@@ -62,7 +62,7 @@ the booth's offline cache never serves the kiosk page in its place.
 
 ## Sites that refuse to be embedded
 
-Three of the fourteen projects needed a decision. Run the checker any time to see where each one
+Three of the projects needed a decision. Run the checker any time to see where each one
 stands:
 
 ```bash
@@ -265,7 +265,7 @@ The browser console also exposes `showroom` (for example `showroom.open('sxan')`
 ## Adding, editing or reordering projects
 
 Everything comes from **`js/projects.js`**. The interface, lenses, map, search, stage and viewer are
-generated from it; adding a 15th project is a data change, not a design change.
+generated from it; adding another project is a data change, not a design change.
 
 1. Copy one project object, give it a new `id` (lowercase letters and digits), fill in the fields.
    The legend at the top of that file explains each one. `order` controls its position in the journey.
