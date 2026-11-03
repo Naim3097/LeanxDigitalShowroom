@@ -259,9 +259,15 @@ window.LEANX_PROJECTS = [
    PNG with a white quiet zone works). `handle` is optional: when filled
    in it is printed under the code so a visitor can also type it.
    `hue` tints the card in that platform's colour.
+
+   `url` is what the QR code points at. On the booth screen the code is the
+   way in, but somebody reading this on their own phone cannot scan a code
+   with the phone they are holding, so there the card becomes a tappable
+   link instead. Fill these in and the phone version starts working; leave
+   one empty and that card stays a code only.
    ===================================================================== */
 window.LEANX_SOCIALS = [
-  { id: 'tiktok',    label: 'TikTok',    handle: '', qr: 'assets/social/leanx_tiktok_qr.png',    hue: 350 },
-  { id: 'instagram', label: 'Instagram', handle: '', qr: 'assets/social/leanx_instagram_qr.png', hue: 320 },
-  { id: 'facebook',  label: 'Facebook',  handle: '', qr: 'assets/social/leanx_facebook_qr.png',  hue: 214 },
+  { id: 'tiktok',    label: 'TikTok',    handle: '', url: '', qr: 'assets/social/leanx_tiktok_qr.png',    hue: 350 },
+  { id: 'instagram', label: 'Instagram', handle: '', url: '', qr: 'assets/social/leanx_instagram_qr.png', hue: 320 },
+  { id: 'facebook',  label: 'Facebook',  handle: '', url: '', qr: 'assets/social/leanx_facebook_qr.png',  hue: 214 },
 ];

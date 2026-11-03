@@ -2,11 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <!-- Pinch-zoom stays available: blocking it is an accessibility problem on a
+       phone, and iOS ignores the block anyway. The kiosk has no pinch to make. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#080B10">
   <title>Leanx Digital · Showroom</title>
-  <meta name="description" content="Interactive exhibition portal: the digital experiences Leanx Digital has built.">
+  <meta name="description" content="Digital experiences we've built: 3D worlds, simulators, AI products, commerce and booking platforms by Leanx Digital.">
   <meta name="robots" content="noindex">
+
+  <!-- Link preview, for when this is shared in a chat or a post.
+       og:image is relative, which the common scrapers resolve against the page.
+       If a preview ever comes through without the picture, make these two
+       absolute (https://your-domain/assets/brand/og-cover.jpg) and regenerate
+       the card itself with: node tools/make-og.mjs -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Leanx Digital">
+  <meta property="og:title" content="Leanx Digital — Digital experiences we've built">
+  <meta property="og:description" content="3D worlds, simulators, AI products, commerce and booking platforms. Explore the work.">
+  <meta property="og:image" content="assets/brand/og-cover.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Leanx Digital showroom: digital experiences we've built">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Leanx Digital — Digital experiences we've built">
+  <meta name="twitter:description" content="3D worlds, simulators, AI products, commerce and booking platforms. Explore the work.">
+  <meta name="twitter:image" content="assets/brand/og-cover.jpg">
   <link rel="icon" href="assets/brand/x-3d.png">
   <link rel="apple-touch-icon" href="assets/brand/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -128,7 +148,7 @@
       <div class="follow-head">
         <p class="eyebrow"><span class="eyebrow-dot"></span>Stay in touch</p>
         <h2 class="follow-title">Follow Leanx Digital</h2>
-        <p class="follow-hint">Open your phone camera, point it at a code, and tap the link that appears.</p>
+        <p class="follow-hint" id="followHint">Open your phone camera, point it at a code, and tap the link that appears.</p>
       </div>
       <div class="follow-grid" id="followGrid"></div>
     </section>
@@ -142,6 +162,10 @@
         <div class="search-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
           <div class="search-text" id="searchText"><span class="search-placeholder" id="searchPlaceholder">Search projects, industries, capabilities&hellip;</span><span id="searchValue"></span><i class="caret"></i></div>
+          <!-- Used instead of the drawn keyboard on a phone, which has its own. -->
+          <input class="search-input" id="searchInput" type="search" enterkeyhint="search"
+                 autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+                 placeholder="Search projects, industries&hellip;" aria-label="Search projects">
           <button class="search-clear" id="searchClear" aria-label="Clear" hidden>&times;</button>
         </div>
         <button class="search-close" id="searchClose" aria-label="Close search">Close</button>

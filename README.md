@@ -198,6 +198,7 @@ configure; rotating or swapping the monitor is enough.
 
 | Panel | What it does |
 | --- | --- |
+| **Phone** (560px wide or less) | Not the booth. The page scrolls, each project is a full-width card with a large preview, search uses the phone's own keyboard, QR codes become links, and nothing auto-advances or resets. See below. |
 | **Portrait** (taller than wide) | Vertical journey. Exhibits are phone-shaped previews stacked top to bottom, with the story beside each one. |
 | **Landscape** up to about 2:1 | Horizontal journey. The focused exhibit sits centre stage with its neighbours peeking in. |
 | **Wide**, 21:9 and wider | The title and the capability filters share one row, so the exhibits get the height back, and the focused exhibit sits left of centre with more of the showroom visible ahead of it. |
@@ -208,7 +209,30 @@ showroom in view rather than bigger text. Tested at 1920×1080, 2560×1080, 3840
 1920×720, 1920×540, 1920×360 and 1080×1920.
 
 **Not sure what the booth panel is?** Open the portal on it and press **`I`**. It reports its own
-size and which of the four compositions it is using, for example `1920 × 540 · bar layout`.
+size and which composition it is using, for example `1920 × 540 · bar layout`.
+
+### Sharing the link with someone
+
+The same URL works as a normal website on a phone, so it can be handed out at a networking event.
+Below 560px wide (`PHONE_MAX` in `js/app.js`, matching `body.is-phone` in `css/portal.css`) the
+portal stops behaving like a kiosk:
+
+- The page **scrolls**. Each project is a full-width card with a large preview, its name, what it is
+  and a button, instead of one thumbnail beside a column of text.
+- **Search uses the phone's own keyboard**; the drawn one is for the booth's touchscreen.
+- **QR codes become links.** A code saying "scan this on your phone" is useless on the phone you are
+  holding, so the project page offers *Open the site* and the Follow cards become tappable.
+- **Nothing moves on its own.** No attract mode, no inactivity reset: it is their device, not a booth.
+- Pinch-zoom works, the notch and home indicator are respected, and only the previews actually on
+  screen are downloaded.
+
+Two things to set up once:
+
+1. **The link preview.** `assets/brand/og-cover.jpg` is what chat apps show. Regenerate it after
+   adding projects with `node tools/make-og.mjs`. If a preview ever arrives without the picture,
+   make the `og:image` and `twitter:image` tags in `index.html` absolute URLs.
+2. **The Follow links.** Fill in `url` for each entry in `LEANX_SOCIALS` (`js/projects.js`). Until
+   then those cards stay QR-only, which does nothing for a visitor on a phone.
 
 ### Windows kiosk checklist
 
@@ -328,6 +352,7 @@ assets/social/                QR codes for the Follow us screen
 assets/fonts/                 Outfit (variable), self-hosted
 assets/shots/                 preview frames per project
 vercel.json                   static deployment: headers and caching
+tools/make-og.mjs             builds the link-preview card shown when the URL is shared
 tools/serve.mjs               local static server (and local proxies, if configured)
 tools/proxy.mjs               local header-stripping proxy — opt-in, local only, unverified
 tools/capture.mjs             preview frame capture (headless Chrome)

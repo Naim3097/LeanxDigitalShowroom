@@ -83,9 +83,17 @@
   // composition. Keep in step with the matching media queries in portal.css.
   const BAR_HEIGHT = 620;
 
+  // At or below this viewport width we are on somebody's phone rather than on
+  // the booth screen, and the kiosk behaviours stop making sense: the page
+  // scrolls, the phone's own keyboard is used, nothing auto-advances and
+  // nothing resets under the visitor. Keep in step with `body.is-phone` in
+  // portal.css, which carries the matching layout.
+  const PHONE_MAX = 560;
+
   // Which of the four compositions the current screen gets. Shown by the `I`
   // shortcut, so a booth screen can report its own size during setup.
   function layoutLabel() {
+    if (state.phone) return 'phone';
     if (state.orient === 'portrait') return 'portrait';
     if (innerHeight <= 430) return 'short bar';
     if (innerHeight <= BAR_HEIGHT) return 'bar';
@@ -93,12 +101,20 @@
     return 'landscape';
   }
 
+  // Returns true when the phone/kiosk mode flipped, so the caller can rebuild
+  // the parts whose markup differs between the two.
   function applyOrient() {
+    const was = state.phone;
     state.orient = innerHeight > innerWidth ? 'portrait' : 'landscape';
+    state.phone = innerWidth <= PHONE_MAX;
     body.dataset.orient = state.orient;
-    $('#homeHintText').innerHTML = state.orient === 'portrait'
-      ? 'Swipe up to explore &middot; tap a project to enter'
-      : 'Swipe to explore &middot; tap a project to enter';
+    body.classList.toggle('is-phone', state.phone);
+    $('#homeHintText').innerHTML = state.phone
+      ? 'Scroll to explore &middot; tap a project to open it'
+      : state.orient === 'portrait'
+        ? 'Swipe up to explore &middot; tap a project to enter'
+        : 'Swipe to explore &middot; tap a project to enter';
+    return was !== state.phone;
   }
 
   /* ------------------------------------------------------------------
@@ -218,6 +234,7 @@
   function activity() { if (!state.booted) return; stopAttract(); scheduleIdle(); }
   function scheduleIdle() {
     clearTimeout(idleTimer); clearTimeout(attractTimer);
+    if (state.phone) return;      // it is their own phone: nothing moves or resets under them
     if (externalOpen()) return;   // that tab runs its own clock, see watchExternal
     if (state.screen === 'home' && !searchOpen) { attractTimer = setTimeout(startAttract, CONFIG.attractAfter); return; }
     // Only a live site times out: stage, map, follow and search stay where the visitor left them.
@@ -231,6 +248,7 @@
     scheduleIdle();
   }
   function startAttract() {
+    if (state.phone) return;      // attract mode is for drawing a passer-by to a booth
     if (state.screen !== 'home' || searchOpen || state.attract || state.busy) return;
     state.attract = true;
     if (state.lens !== 'all') setLens('all');
@@ -284,16 +302,23 @@
      Horizontal in landscape, vertical in portrait. Spring physics,
      momentum flicks, snap to the nearest exhibit, tap to enter.
   ------------------------------------------------------------------ */
+  // Which capture an exhibit shows: the phone-shaped one only on the portrait
+  // kiosk, where the card is phone-shaped too. A real phone shows the desktop
+  // capture, because there the card is a full-width 16:10 panel.
+  function shotMode() { return state.orient === 'portrait' && !state.phone ? 'm1' : 'd1'; }
+
   function exhibitNode(p, i) {
     const node = document.createElement('article');
     node.className = 'exhibit'; node.dataset.id = p.id; node.style.setProperty('--ac', p.accent || '#32A4BD');
     const caps = capLabels(p);
-    const portrait = state.orient === 'portrait';
-    const eager = i < 3;
+    // Render only the preview that this layout will actually show. Rendering
+    // both meant a phone eagerly downloaded the mobile capture it then hid,
+    // while the desktop one it does show waited on lazy loading.
+    const useMobileShot = shotMode() === 'm1';
     node.innerHTML = `
       <div class="ex-frame">
-        <img class="for-landscape" src="${shot(p, 'd1')}" alt="" draggable="false" loading="${!portrait && eager ? 'eager' : 'lazy'}">
-        <img class="for-portrait" src="${shot(p, 'm1')}" alt="" draggable="false" loading="${portrait && eager ? 'eager' : 'lazy'}">
+        <img class="${useMobileShot ? 'for-portrait' : 'for-landscape'}" src="${shot(p, useMobileShot ? 'm1' : 'd1')}"
+             alt="" draggable="false" decoding="async" loading="${i < 3 ? 'eager' : 'lazy'}">
         <div class="ex-shade"></div>
         ${p.featured ? '<span class="ex-badge">Featured</span>' : ''}
         ${canEmbed(p) ? '<span class="ex-live"><i></i>Live</span>' : ''}
@@ -313,7 +338,7 @@
 
   const rail = (() => {
     const el = $('#rail'), track = $('#railTrack');
-    let items = [], step = 1, pos = 0, vel = 0, target = 0, raf = 0, vertical = false, leadR = 0.5;
+    let items = [], step = 1, pos = 0, vel = 0, target = 0, raf = 0, vertical = false, leadR = 0.5, listMode = false;
     let box = { w: 0, h: 0 }, exW = 0, exH = 0, gap = 0;
     let dragging = false, startPos = 0, startPt = 0, moved = false, samples = [], lastT = 0, pid = null, wheelAcc = 0, wheelLock = 0;
     const axis = e => (vertical ? e.clientY : e.clientX);
@@ -330,6 +355,25 @@
     }
     function layout() {
       vertical = state.orient === 'portrait';
+      listMode = !!state.phone;
+      if (listMode) {
+        // On a phone the exhibits are a plain scrolling column and CSS owns the
+        // geometry. Undo everything the carousel left on the nodes so they can
+        // lay out naturally, and let the browser do the scrolling.
+        cancelAnimationFrame(raf);
+        track.style.transform = '';
+        items.forEach(it => {
+          const s = it.node.style;
+          s.left = ''; s.top = ''; s.transform = ''; s.visibility = '';
+          const shade = it.node.querySelector('.ex-shade');
+          if (shade) shade.style.opacity = '';
+          it.node.classList.add('is-focus');
+        });
+        ['--ex-w', '--ex-h', '--fr-w', '--ph-w'].forEach(v => el.style.removeProperty(v));
+        pos = target = vel = 0;
+        state.railDirty = false;
+        return;
+      }
       const r = el.getBoundingClientRect(); box = { w: r.width, h: r.height };
       if (!box.w || !box.h) { state.railDirty = true; return; }
       state.railDirty = false;
@@ -379,6 +423,7 @@
       pos = target = clamp(state.index, 0, Math.max(0, items.length - 1)) * step; vel = 0; render();
     }
     function render() {
+      if (listMode) return;            // the scrolling column needs no transforms
       const lead = vertical ? (box.h - exH) / 2 : (box.w - exW) * leadR;
       const off = (lead - pos).toFixed(2);
       track.style.transform = vertical ? `translate3d(0, ${off}px, 0)` : `translate3d(${off}px, 0, 0)`;
@@ -406,7 +451,14 @@
     const maxPos = () => Math.max(0, (items.length - 1) * step);
     function setIndex(i, immediate) {
       const n = items.length; if (!n) return;
-      i = clamp(i, 0, n - 1); target = i * step;
+      i = clamp(i, 0, n - 1);
+      if (listMode) {                  // scroll the card into view instead of driving a spring
+        state.index = i; focusChanged();
+        const node = items[i].node;
+        if (node.scrollIntoView) node.scrollIntoView({ behavior: immediate ? 'auto' : 'smooth', block: 'start' });
+        return;
+      }
+      target = i * step;
       if (immediate) { cancelAnimationFrame(raf); pos = target; vel = 0; render(); } else animate();
     }
     function onTap(e) {
@@ -415,7 +467,15 @@
       const i = items.findIndex(it => it.node === node); if (i < 0) return;
       if (i === state.index) openProject(items[i].p, { x: e.clientX, y: e.clientY }); else setIndex(i);
     }
+    // On a phone the browser scrolls the list and a plain click opens a card.
+    track.addEventListener('click', e => {
+      if (!listMode) return;
+      const node = e.target.closest && e.target.closest('.exhibit'); if (!node) return;
+      const it = items.find(x => x.node === node); if (!it) return;
+      openProject(it.p, { x: e.clientX, y: e.clientY });
+    });
     el.addEventListener('pointerdown', e => {
+      if (listMode) return;
       if (!items.length || (e.pointerType === 'mouse' && e.button !== 0) || pid !== null) return;
       pid = e.pointerId; try { el.setPointerCapture(pid); } catch (_) {}
       cancelAnimationFrame(raf); dragging = true; moved = false; startPos = pos; startPt = axis(e); vel = 0;
@@ -444,6 +504,7 @@
     };
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
     el.addEventListener('wheel', e => {
+      if (listMode) return;            // let the column scroll normally
       e.preventDefault(); if (performance.now() < wheelLock) return;
       wheelAcc += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (Math.abs(wheelAcc) > 50) { setIndex(state.index + Math.sign(wheelAcc)); wheelAcc = 0; wheelLock = performance.now() + 380; }
@@ -460,6 +521,7 @@
   function setAccent(c) { document.documentElement.style.setProperty('--accent', c || '#32A4BD'); }
   const preloaded = new Set();
   function preload(p) {
+    if (state.phone) return;         // do not spend a visitor's data ahead of a tap
     if (preloaded.has(p.id)) return; preloaded.add(p.id);
     ['d2', 'd3', 'm1'].forEach(k => { const im = new Image(); im.src = shot(p, k); });
   }
@@ -506,6 +568,7 @@
           <div class="stage-actions">
             <button class="btn btn--gold" id="enterBtn">${live || external ? 'Experience it' : 'See the screens'} ${external ? EXTERNAL_ARROW : ARROW}</button>
             <div class="stage-qr"><div class="qr" id="stageQr"></div><small>Scan to open on your phone</small></div>
+            <a class="stage-open btn btn--ghost" href="${esc(p.url)}" target="_blank" rel="noopener">Open the site ${EXTERNAL_ARROW}</a>
             <div class="stage-portrait-switch">
               ${prev ? `<button class="round-btn" data-switch="${prev.id}" aria-label="Previous project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>` : ''}
               ${next ? `<button class="round-btn" data-switch="${next.id}" aria-label="Next project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>` : ''}
@@ -665,15 +728,31 @@
   };
   function buildFollow() {
     const grid = $('#followGrid'); if (!grid) return;
-    grid.innerHTML = SOCIALS.map(s => `
-      <article class="follow-card" style="--h:${Number(s.hue) || 0}">
+    const hint = $('#followHint');
+    if (hint) {
+      const anyLink = state.phone && SOCIALS.some(s => s.url);
+      hint.textContent = !state.phone
+        ? 'Open your phone camera, point it at a code, and tap the link that appears.'
+        : anyLink ? 'Tap a channel to open it.'
+          : 'These codes are for scanning from another device.';
+    }
+    // A code is the way in from the booth screen. On a phone you cannot scan a
+    // code with the phone you are holding, so the card becomes a link to tap.
+    grid.innerHTML = SOCIALS.map(s => {
+      const link = state.phone && s.url;
+      const tag = link ? 'a' : 'article';
+      const attrs = link ? ` href="${esc(s.url)}" target="_blank" rel="noopener"` : '';
+      const cta = link ? 'Tap to open' : (state.phone ? 'Scan from another device' : 'Scan to follow');
+      return `
+      <${tag} class="follow-card${link ? ' is-link' : ''}" style="--h:${Number(s.hue) || 0}"${attrs}>
         <div class="follow-card-head">
           <span class="follow-icon">${SOCIAL_ICONS[s.id] || ''}</span>
-          <div><b>${esc(s.label)}</b><span>Scan to follow</span></div>
+          <div><b>${esc(s.label)}</b><span>${cta}</span></div>
         </div>
         <div class="follow-qr"><img src="${esc(s.qr)}" alt="QR code: Leanx Digital on ${esc(s.label)}" draggable="false"></div>
         ${s.handle ? `<p class="follow-handle">${esc(s.handle)}</p>` : ''}
-      </article>`).join('');
+      </${tag}>`;
+    }).join('');
     $$('.follow-qr img', grid).forEach(im => im.addEventListener('error', () => { im.closest('.follow-card').classList.add('is-missing'); }));
     if (!SOCIALS.length) $('#followBtn').hidden = true;
   }
@@ -693,7 +772,10 @@
       + '<div class="kb-row"><button class="key key--wide" data-key="clear">Clear</button><button class="key key--space" data-key=" ">space</button><button class="key key--wide" data-key="close">Done</button></div>';
     kb.addEventListener('pointerdown', e => { const k = e.target.closest('.key'); if (!k) return; e.preventDefault(); press(k.dataset.key); });
     $('#searchResults').addEventListener('click', e => { const r = e.target.closest('.result'); if (r) { const p = byId(r.dataset.id); closeSearch(); openProject(p, pt(e)); } });
-    $('#searchClear').addEventListener('click', () => { query = ''; runSearch(); });
+    const input = $('#searchInput');
+    input.addEventListener('input', () => { query = input.value.slice(0, 40); runSearch(); });
+    input.addEventListener('search', () => { query = input.value.slice(0, 40); runSearch(); });
+    $('#searchClear').addEventListener('click', () => { query = ''; input.value = ''; runSearch(); if (state.phone) input.focus(); });
     $('#searchClose').addEventListener('click', closeSearch);
     $('#search').addEventListener('click', e => { if (e.target === e.currentTarget) closeSearch(); });
   }
@@ -708,6 +790,13 @@
   function openSearch() {
     if (searchOpen) return; searchOpen = true; stopAttract();
     query = ''; runSearch(); $('#search').hidden = false; scheduleIdle();
+    if (state.phone) {
+      const input = $('#searchInput');
+      input.value = '';
+      // Raise the phone's own keyboard. A frame's delay, because the panel is
+      // only just unhidden and iOS ignores focus on an element it cannot see.
+      requestAnimationFrame(() => { try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); } });
+    }
   }
   function closeSearch() { if (!searchOpen) return; searchOpen = false; $('#search').hidden = true; scheduleIdle(); }
   function tokensOf(q) { return q.trim().toLowerCase().split(/\s+/).filter(Boolean); }
@@ -749,6 +838,8 @@
   function runSearch() {
     const tokens = tokensOf(query);
     $('#searchValue').textContent = query; $('#searchPlaceholder').hidden = !!query; $('#searchClear').hidden = !query;
+    const input = $('#searchInput');          // keep the real field in step with the quick chips
+    if (input && input.value !== query) input.value = query;
     const results = tokens.length
       ? PROJECTS.map(p => scoreProject(p, tokens)).filter(Boolean).sort((a, b) => b.score - a.score || a.p.order - b.p.order)
       : PROJECTS.map(p => ({ p, why: '' }));
@@ -924,9 +1015,10 @@
 
     document.addEventListener('keydown', e => {
       if (searchOpen) {
-        if (e.key === 'Escape') closeSearch();
-        else if (e.key === 'Backspace') press('backspace');
-        else if (e.key === 'Enter') { const r = $('#searchResults .result'); if (r) r.click(); }
+        if (e.key === 'Escape') { closeSearch(); return; }
+        if (e.key === 'Enter') { const r = $('#searchResults .result'); if (r) r.click(); return; }
+        if (e.target === $('#searchInput')) return;   // the real field types for itself
+        if (e.key === 'Backspace') press('backspace');
         else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) press(e.key.toLowerCase());
         return;
       }
@@ -949,8 +1041,12 @@
     window.addEventListener('resize', () => {
       clearTimeout(resizeT);
       resizeT = setTimeout(() => {
-        applyOrient(); syncFullscreen();
-        if (state.screen === 'home') rail.layout(); else state.railDirty = true;
+        const shotBefore = shotMode();
+        const modeFlipped = applyOrient(); syncFullscreen();
+        if (modeFlipped) buildFollow();          // codes on the booth, links on a phone
+        if (shotMode() !== shotBefore) rail.build(state.list);   // the previews themselves change
+        else if (state.screen === 'home') rail.layout();
+        else state.railDirty = true;
       }, 80);
     });
     document.addEventListener('contextmenu', e => e.preventDefault());

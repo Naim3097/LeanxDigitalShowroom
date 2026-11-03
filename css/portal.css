@@ -604,3 +604,174 @@ body[data-orient="portrait"] .key--wide { max-width: none; }
   .follow-icon { width: 2.1rem; height: 2.1rem; }
   .frames { grid-template-columns: minmax(0, 1fr) 15rem; }
 }
+
+/* =====================================================================
+   PHONE — a person's own phone, not the booth
+   Everything above is built for a screen bolted to a wall: no scrolling,
+   one exhibit at a time, a keyboard drawn in HTML, QR codes pointing at
+   the phone you are already holding. On a phone the same content has to
+   behave like a website: it scrolls, it uses the real keyboard, and the
+   preview is the width of the screen rather than a thumbnail beside text.
+
+   Scoped to body.is-phone (set in js/app.js from PHONE_MAX) rather than to
+   a bare media query, because these rules have to outrank the portrait
+   kiosk rules above and a media query adds no specificity.
+   ===================================================================== */
+body.is-phone {
+  --gutter: 1.25rem; --chrome-h: 4.2rem; --tap: 3rem;
+  touch-action: pan-y;                 /* the base rule is `none`, which would block scrolling */
+  overscroll-behavior-y: contain;
+  height: 100svh;                      /* svh, so the iOS address bar cannot clip the layout */
+}
+body.is-phone .ambient-x { display: none; }
+
+/* The notch and the home indicator. */
+body.is-phone .chrome { padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); }
+body.is-phone .screen { padding-bottom: env(safe-area-inset-bottom); }
+
+/* ---- Chrome: seven controls do not fit across 390px ---- */
+body.is-phone .chrome { gap: .5rem; }
+body.is-phone .wordmark { height: 1.75rem; }
+body.is-phone #fullscreenBtn { display: none; }     /* nothing for it to do on a phone */
+body.is-phone .home-btn-label { display: none; }
+body.is-phone .home-x { width: 1.9rem; }
+body.is-phone .nav-btn { width: 2.9rem; height: 2.9rem; padding: 0; }
+body.is-phone .nav-btn--back { width: auto; padding: 0 .85rem; }
+body.is-phone .chrome-title b { font-size: .95rem; }
+body.is-phone .chrome-title span { font-size: .72rem; }
+
+/* ---- Home ---- */
+body.is-phone .home-head { padding: .2rem var(--gutter) 0; }
+body.is-phone .home-title { font-size: 2.1rem; line-height: 1.05; margin: .3rem 0 .4rem; }
+body.is-phone .home-hint { font-size: .9rem; }
+body.is-phone .lenses { padding: .7rem var(--gutter) .5rem; gap: .45rem; touch-action: pan-x; }
+body.is-phone .lens { height: 2.6rem; font-size: .9rem; }
+
+/* The exhibits become a scrolling list of full-width cards. The preview is
+   the point, so it gets the whole width instead of a sliver beside a caption. */
+body.is-phone .rail {
+  overflow-y: auto; overflow-x: hidden; touch-action: pan-y;
+  -webkit-overflow-scrolling: touch; cursor: default;
+  /* No mask here on purpose: nothing scrolls under anything, and a mask on a
+     scroll container repaints every frame, which is felt on a phone. */
+}
+body.is-phone .rail-track {
+  position: static; width: 100%; height: auto;
+  display: flex; flex-direction: column; gap: 1.6rem;
+  padding: .3rem var(--gutter) 1.5rem; transform: none !important;
+}
+body.is-phone .exhibit {
+  position: static; width: 100% !important; height: auto !important;
+  transform: none !important; visibility: visible !important;
+  flex-direction: column; gap: .85rem; align-items: stretch;
+}
+body.is-phone .ex-frame {
+  width: 100% !important; height: auto; flex: 0 0 auto; aspect-ratio: 16 / 10;
+  border-radius: var(--r-l); border: 1px solid var(--line-2);
+}
+body.is-phone .ex-frame img.for-landscape { display: block; }
+body.is-phone .ex-frame img.for-portrait { display: none; }
+body.is-phone .ex-shade { display: none; }
+body.is-phone .ex-badge { top: .8rem; left: .8rem; right: auto; }
+body.is-phone .ex-live { top: .8rem; left: auto; right: .8rem; bottom: auto; }
+body.is-phone .ex-cap {
+  opacity: 1; flex-direction: column; align-items: flex-start;
+  justify-content: flex-start; gap: .45rem; padding: 0 .15rem;
+}
+body.is-phone .ex-name { font-size: 1.6rem; white-space: normal; overflow: visible; }
+body.is-phone .ex-kind { font-size: .98rem; white-space: normal; overflow: visible; }
+body.is-phone .ex-num { font-size: .72rem; }
+body.is-phone .ex-tag { display: block; color: var(--muted); font-size: .98rem; line-height: 1.4; }
+body.is-phone .ex-enter { opacity: 1; transform: none; height: 3.1rem; font-size: 1rem; margin-top: .25rem; }
+
+/* Prev / next / progress belong to a carousel; the list scrolls instead. */
+body.is-phone .rail-foot { display: none; }
+
+/* ---- Stage: flows and scrolls, so the button is always reachable ---- */
+body.is-phone .stage {
+  display: flex; flex-direction: column; gap: 1rem;
+  overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch;
+  padding: .2rem var(--gutter) 1.6rem;
+}
+body.is-phone .stage-visual { order: -1; flex: 0 0 auto; gap: .8rem; }
+body.is-phone .stage-screen-wrap { display: block; container-type: normal; flex: 0 0 auto; }
+body.is-phone .stage-screen { width: 100%; max-height: none; aspect-ratio: 16 / 10; }
+body.is-phone .stage-phone { width: 23%; bottom: -2%; }
+body.is-phone .stage-info { overflow: visible; gap: .7rem; }
+body.is-phone .stage-name { font-size: 2.3rem; }
+body.is-phone .stage-tagline { font-size: 1.1rem; }
+body.is-phone .stage-desc { font-size: 1rem; line-height: 1.5; }
+body.is-phone .stage-hl li { font-size: .98rem; }
+body.is-phone .stage-actions { margin-top: .2rem; gap: .7rem; }
+body.is-phone .stage-actions .btn--gold { flex: 1 1 100%; height: 3.6rem; font-size: 1.1rem; }
+body.is-phone .stage-meta { font-size: .85rem; gap: .35rem 1.1rem; }
+/* Selecting and copying a description is normal on a phone. */
+body.is-phone .stage-info, body.is-phone .ex-cap { user-select: text; -webkit-user-select: text; }
+
+/* ---- Map: one column, so a tile is big enough to read ---- */
+body.is-phone .map-grid { grid-template-columns: 1fr; gap: 1rem; }
+body.is-phone .tile { aspect-ratio: 16 / 10; }
+body.is-phone .tile-cap b { font-size: 1.25rem; }
+body.is-phone .tile-cap span { font-size: .9rem; }
+body.is-phone .map-title { font-size: 2rem; }
+body.is-phone .map-hint, body.is-phone .follow-hint { font-size: .92rem; }
+body.is-phone .map-group-head { gap: .3rem; }
+body.is-phone .map-group-head h3 { font-size: 1.15rem; }
+body.is-phone .map-group-head p { font-size: .88rem; }
+
+/* ---- Search: the phone already has a keyboard ---- */
+body.is-phone .keyboard { display: none; }
+body.is-phone .search { padding: .6rem var(--gutter) 0; }
+body.is-phone .search-field { height: 3.4rem; font-size: 1.05rem; }
+body.is-phone .search-text { display: none; }
+body.is-phone .search-close { height: 3.4rem; padding: 0 1rem; }
+body.is-phone .search-results { grid-template-columns: 1fr; padding-bottom: 1.5rem; }
+body.is-phone .result { min-height: 4.6rem; }
+body.is-phone .result span { white-space: normal; }
+body.is-phone .result b { font-size: 1.05rem; }
+body.is-phone .search-quick { gap: .4rem; }
+
+/* Opaque, so a bright QR code on the screen underneath cannot show through. */
+body.is-phone .search { background: var(--bg); }
+
+/* The real text field, used in place of the drawn keyboard. */
+.search-input { display: none; }
+/* type=search draws its own clear button; the panel already has one. */
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+body.is-phone .search-input {
+  display: block; flex: 1; min-width: 0; background: none; border: 0; outline: none;
+  color: var(--text); font: inherit; padding: 0;
+  /* Never below 16px: iOS Safari zooms the whole page in on a smaller field. */
+  font-size: max(16px, 1.05rem);
+  -webkit-user-select: text; user-select: text;
+}
+body.is-phone .search-input::placeholder { color: var(--dim); }
+
+/* ---- Follow: one column; a card with a link drops its code ---- */
+body.is-phone .follow-grid { grid-template-columns: 1fr; gap: .8rem; }
+body.is-phone .follow-title { font-size: 2rem; }
+body.is-phone .follow-card.is-link { text-decoration: none; min-height: var(--tap); }
+body.is-phone .follow-card.is-link .follow-qr { display: none; }
+body.is-phone .follow-card.is-link:active { transform: scale(.97); }
+
+/* ---- A QR code is pointless on the device you are already holding ---- */
+/* The kiosk keeps the code to scan; the phone gets a link to tap instead. */
+.stage-open { display: none; text-decoration: none; }
+body.is-phone .stage-open { display: inline-flex; }
+body.is-phone .viewer-qr, body.is-phone .stage-qr { display: none; }
+body.is-phone .frames { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+body.is-phone .frames-side { border-left: 0; border-top: 1px solid var(--line); padding: 1rem var(--gutter) 1.2rem; flex-direction: row; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+body.is-phone .frames-side .qr { display: none; }
+body.is-phone .frames-side h3 { font-size: 1.15rem; flex: 1 1 100%; }
+body.is-phone .frames-side p { font-size: .9rem; flex: 1 1 100%; }
+body.is-phone .frames-side .btn { margin-top: 0; flex: 1 1 100%; }
+body.is-phone .frame-slide { padding: .8rem; }
+
+body.is-phone .toast, body.is-phone .touch-hint { bottom: calc(1rem + env(safe-area-inset-bottom)); }
+body.is-phone .idle-card { padding: 1.5rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-glow, .swipe-glyph i, .touch-hint-ring::after, .boot-ring { animation: none !important; }
+  .exhibit, .tile, .nav-btn, .btn { transition-duration: .01ms !important; }
+}

@@ -83,8 +83,19 @@ async function main() {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: s } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, s); await cdp.send('Runtime.enable', {}, s);
-  await cdp.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false }, s);
+  // A narrow size means we are checking the phone layout, so emulate a real
+  // phone (mobile viewport, 3x pixels, phone user agent) rather than a small
+  // desktop window -- otherwise the screenshots lie about what a visitor sees.
+  const PHONE = W <= 560;
+  await cdp.send('Emulation.setDeviceMetricsOverride',
+    { width: W, height: H, deviceScaleFactor: PHONE ? 3 : 1, mobile: PHONE, screenWidth: W, screenHeight: H }, s);
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 10 }, s);
+  if (PHONE) {
+    await cdp.send('Network.enable', {}, s);
+    await cdp.send('Network.setUserAgentOverride', {
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    }, s);
+  }
   const errors = [];
   cdp.ws.addEventListener('message', ev => { const m = JSON.parse(ev.data); if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.text + ' ' + (m.params.exceptionDetails.exception?.description || '')); });
   await cdp.send('Page.navigate', { url: URL }, s);
