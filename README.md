@@ -29,7 +29,7 @@ After the first deploy, note the address (for example `https://showroom.leanxdig
 things follow from it:
 
 1. Point the booth at it: `Start Showroom (kiosk).bat https://showroom.leanxdigital.io`
-2. Allow that exact address to display FTECH and Nexova — see the next section.
+2. Allow that exact address to display the sites that refuse framing — see the next section.
 
 The deployed portal is marked `noindex`, registers a service worker so the shell, fonts and preview
 frames keep working if the venue wifi drops, and ships a web manifest so it can be installed
@@ -72,21 +72,26 @@ node tools/check-embed.mjs
 It asks every project's server whether it allows being displayed inside another page and tells you
 what `embed` should be set to in `js/projects.js`.
 
-### FTECH and Nexova
+### The three that refuse to be framed
 
 Their servers refuse to be displayed inside any other page:
 
 | Site | Header it sends | Effect |
 | --- | --- | --- |
 | ftechlighting.com | `X-Frame-Options: DENY` | no page anywhere may frame it, not even itself |
+| bykiofficial.com | `X-Frame-Options: DENY` | the same; this one appeared later, caught by the checker |
 | nexova.my | `X-Frame-Options: SAMEORIGIN` + CSP `frame-ancestors 'self'` | only its own pages may frame it |
+
+A client site can start sending this header at any redeploy, and the portal cannot tell from the
+outside: the frame just comes up blank. Run `node tools/check-embed.mjs` before an event and it will
+name any project whose setting no longer matches its server.
 
 This is a server instruction, not a portal limitation. No browser lets the embedding page override
 it, and there is no flag or setting on the kiosk that changes it. The header exists to stop
 strangers from framing the site and tricking people into clicking through it, which is worth keeping
 for the public internet. What we want is a narrow exception for our own showroom.
 
-**FTECH currently takes the other route:** `openExternal: true` in `js/projects.js`, so "Experience
+**All three currently take the other route:** `openExternal: true` in `js/projects.js`, so "Experience
 it" opens the real site in its own tab instead of showing its screens. The showroom keeps a handle
 on that tab, stays waiting behind it, and closes it when it returns home, whether a visitor presses
 Home or the booth is simply left alone. That matters on a kiosk, where there is no tab bar for a
@@ -137,8 +142,9 @@ When it reports `LIVE`, set `embed: true` for that project in `js/projects.js` a
 `embedBlocked` and `openExternal` lines. Nothing else changes: the showroom starts opening it inside
 the portal.
 
-Until then Nexova is presented as full-screen captured screens with a QR code, and the viewer states
-the reason on screen, so the booth can answer the question honestly.
+No project is presented as captured screens today: every one either opens inside the portal or opens
+live in its own tab. The screens path is still there as the fallback for a blocked popup, and the
+viewer states the reason on screen, so the booth can answer the question honestly.
 
 ### The local proxy (an alternative, if you cannot redeploy those sites)
 
